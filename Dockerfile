@@ -5,7 +5,7 @@ FROM --platform=linux/amd64 rocker/shiny-verse:latest
 #HAVE PACMAN INSTLALL DEPENDENCIES ON SYSTEM
 RUN apt-get update && apt-get install -y \ 
   libssl-dev \
-  libcur4-gnutls-dev \ 
+  libcurl4-gnutls-dev \ 
   libxml2-dev 
   
 #COPY SHINY FILES INTO DOCKER CONTAINMENT
