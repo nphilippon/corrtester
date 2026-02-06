@@ -40,7 +40,7 @@ fluidPage(
           selected = c("CVX", "CNQ.TO", "CL=F"),
           multiple = TRUE,
           options  = list(
-            placeholder = "Search / select assets",
+            placeholder = "Select assets",
             plugins = list("remove_button"),
             hideSelected = FALSE,
             closeAfterSelect = FALSE
@@ -57,8 +57,11 @@ fluidPage(
         
         hr(),
         
-        helpText("Select primary asset for rolling corrleations with Oil (WIP)"),
+        helpText("Rolling Correlation Analysis", style = "font-size: 1.1em;"),
         selectInput("focus_asset", "Focus Asset:", choices = NULL),
+        selectInput("benchmark_asset", "Benchmark:",
+                    choices = c("WTI Crude" = "CL=F", "Nat Gas" = "NG=F", "Brent Crude" = "BZ=F")),
+        numericInput("roll_window", "Rolling Correlation Window (days):", value = 60, min  = 10, max = 252),
         
         actionButton(
           "run_analysis", "Update Analysis",
@@ -85,8 +88,12 @@ fluidPage(
           div(
             style = "background:#272b30; padding:20px; border:1px solid #444; border-top:none; border-radius:0 0 14px 14px;",
             fluidRow(
-              column(7, h4("Correlation Heatmap"), plotOutput("corr_plot", height = "550px")),
-              column(5, h4("Correlation Coefficients"), tableOutput("corr_summary"))
+              column(width = 7, 
+                     h4("Correlation Heatmap", style = "color: #e67e22;"), 
+                     plotOutput("corr_plot", height = "550px")),
+              column(width = 5, 
+                     h4("Rolling Correlation over Time", style = "color: #e67e22;"),
+                     plotlyOutput("rolling_corr_plot", height = "550px"))
             )
           )
         ),
