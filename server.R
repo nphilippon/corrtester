@@ -69,6 +69,7 @@ function(input, output, session) {
              tl.cex = 1.4,      # Label Size
              addCoef.col = "black", # Coefficient Colour
              number.cex = 1.5,  # Coefficient Size
+             number.digits = 2, # New, decimal points
              cl.pos = "n",      # Hide Legend
              order = "hclust",  # Groups Similar
              col = col(200),    # Gradient
@@ -79,12 +80,60 @@ function(input, output, session) {
   output$relative_plot <- renderPlotly({
     req(all_data())
     
+   p <- all_data() %>%
+  mutate(symbol = clean_ticker_names(symbol)) %>%
+  group_by(symbol) %>%
+  arrange(date, .by_group = TRUE) %>%
+  filter(!is.na(adjusted)) %>%
+  mutate(indexed = (adjusted / first(adjusted)) * 100) %>%
+  mutate(tip = ...) %>%
+  ggplot(aes(x = date, y = indexed, color = symbol, group = symbol, text = tip)) +
+  geom_line(alpha = 1) +
+      theme_minimal() +
+      theme(
+        text = element_text(color = "white"),
+        axis.text = element_text(color = "white"),
+        panel.grid.major = element_line(color = "#444"),
+        panel.grid.minor = element_line(color = "#333")
+      ) +
+      labs(
+        title = "Share Price Performance Indexed to 100",
+        y = "Indexed Value",
+        x = "",
+        color = "Ticker"
+      )
+    
+    ggplotly(p, tooltip = "text") %>%
+      layout(paper_bgcolor = "rgba(0,0,0,0)", plot_bgcolor = "rgba(0,0,0,0)")
+  })
+  
+  # Volatility Plot
+  output$relative_plot <- renderPlotly({
+    req(all_data())
+    
     p <- all_data() %>%
-      mutate(symbol = clean_ticker_names(symbol)) %>% 
+      mutate(symbol = clean_ticker_names(symbol)) %>%
       group_by(symbol) %>%
-      filter(!is.na(adjusted)) %>% 
+      arrange(date, .by_group = TRUE) %>%         # make sure "first(adjusted)" is the true start
+      filter(!is.na(adjusted)) %>%
       mutate(indexed = (adjusted / first(adjusted)) * 100) %>%
-      ggplot(aes(x = date, y = indexed, color = symbol)) +
+      mutate(
+        tip = if (isTRUE(input$show_actual_price)) {
+          paste0(
+            "date: ", date,
+            "<br>symbol: ", symbol,
+            "<br>index: ", sprintf("%.2f", indexed),
+            "<br>price: ", sprintf("%.2f", adjusted)
+          )
+        } else {
+          paste0(
+            "date: ", date,
+            "<br>symbol: ", symbol,
+            "<br>index: ", sprintf("%.2f", indexed)
+          )
+        }
+      ) %>%
+      ggplot(aes(x = date, y = indexed, color = symbol, group = symbol, text = tip)) +  # <-- group fixes missing lines
       geom_line(alpha = 1) +
       theme_minimal() +
       theme(
@@ -94,33 +143,14 @@ function(input, output, session) {
         panel.grid.minor = element_line(color = "#333")
       ) +
       labs(
-        title = "Share Price Performance Indexed to 100", 
-        y = "Indexed Value", 
+        title = "Share Price Performance Indexed to 100",
+        y = "Indexed Value",
         x = "",
-        color = "Ticker")
+        color = "Ticker"
+      )
     
-    ggplotly(p) %>% 
-      layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-  })
-  
-  # Volatility Plot
-  output$vol_plot <- renderPlotly({
-    req(returns_data())
-    
-    # Calculate SD of returns
-    vol_data <- returns_data() %>%
-      summarise(stdev = sd(daily_return, na.rm = TRUE) * sqrt(252)) %>% # Annualized Vol 
-      mutate(symbol = clean_ticker_names(symbol)) 
-    
-    p <- ggplot(vol_data, aes(x = reorder(symbol, stdev), y = stdev, fill = symbol)) +
-      geom_col() +
-      coord_flip() +
-      theme_tq() +
-      labs(title = "Annualized Volatility (Risk Profile)", 
-           x = "Asset", y = "Annualized StDev") +
-      scale_fill_tq()
-    
-    ggplotly(p)
+    ggplotly(p, tooltip = "text") %>%
+      layout(paper_bgcolor = "rgba(0,0,0,0)", plot_bgcolor = "rgba(0,0,0,0)")
   })
   
   output$corr_summary <- renderTable({
@@ -135,6 +165,6 @@ function(input, output, session) {
     cor_res <- cor(wide_returns)
     colnames(cor_res) <- clean_ticker_names(colnames(cor_res))
     rownames(cor_res) <- colnames(cor_res)
-    cor_res
+    round(cor_res, 2)
   }, rownames = TRUE, striped = TRUE, spacing ='xs')
 }
