@@ -28,9 +28,9 @@ fluidPage(
   
   titlePanel("Energy Equity Sensitivies to Commodities"),
   
+  # Global Asset and Date Inputs
   fluidRow(
-    column(
-      width = 3,
+    column(width = 3,
       wellPanel(
         style = "background:#2e3338; border:1px solid #444; border-radius:14px;",
         
@@ -55,21 +55,10 @@ fluidPage(
         
         checkboxInput("show_actual_price", "Show actual price in tooltip", TRUE),
         
-        hr(),
-        
-        helpText("Rolling Correlation Analysis", style = "font-size: 1.1em;"),
-        selectInput("focus_asset", "Focus Asset:", choices = NULL),
-        selectInput("benchmark_asset", "Benchmark Asset:", choices = NULL),
-        numericInput("roll_window", "Rolling Correlation Window (days):", value = 60, min  = 10, max = 252),
-        
-        actionButton(
-          "run_analysis", "Update Analysis",
-          class = "btn-warning btn-block",
-          style = "color:white; font-weight:bold;"
-        )
+        hr()
       )
     ),
-    
+    # Relative Price Chart
     column(
       width = 9,
       plotlyOutput("relative_plot", height = "400px")
@@ -78,26 +67,50 @@ fluidPage(
   
   br(),
   
+  # Analytics Tabs
   fluidRow(
     column(
       width = 12,
       tabsetPanel(
         tabPanel(
-          "Correlation Matrix",
+          "Correlation",
           div(
             style = "background:#272b30; padding:20px; border:1px solid #444; border-top:none; border-radius:0 0 14px 14px;",
             fluidRow(
+              # Correlation Matrix
               column(width = 4, 
                      h4("Correlation Heatmap", style = "color: #e67e22;"), 
-                     plotOutput("corr_plot", height = "550px")),
+                     plotOutput("corr_plot", height = "550px"),
+                     br(),
+              ),
+              
+              # Rolling Correlation
               column(width = 8, 
+                     div(class = "control-panel",
+                         fluidRow(
+                           column(width = 4,
+                                  selectInput("focus_asset", "Focus Asset:", choices = NULL)),
+                           column(width = 4,
+                                  selectInput("benchmark_asset", "Benchmark Asset:", choices = NULL)),
+                           column(width = 4,
+                                  numericInput("roll_window", "Rolling Correlation Window (days):", 
+                                               value = 60,
+                                               min = 10,
+                                               max = 252))
+                           )
+                         ),
                      h4("Rolling Correlation over Time", style = "color: #e67e22;"),
-                     plotlyOutput("rolling_corr_plot", height = "550px"))
+                     plotlyOutput("rolling_corr_plot", height = "550px")
+              )
             )
           )
         ),
-        tabPanel("Risk & Volatility", br(), plotlyOutput("vol_plot", height = "500px"))
+        tabPanel("Risk & Volatility", 
+                 div(style = "background: #272b30; padding: 20px; border: 1px solid #444; border-top: none;",
+                  plotlyOutput("vol_plot", height = "500px")
+                 )
+        )
+      )
       )
     )
   )
-)

@@ -82,38 +82,7 @@ function(input, output, session) {
              mar = c(0, 0, 2, 0)) # Margins
    })
   
-  # Performance Comparison (Stock price indexed to 100)
-  output$relative_plot <- renderPlotly({
-    req(all_data())
-    
-   p <- all_data() %>%
-  mutate(symbol = clean_ticker_names(symbol)) %>%
-  group_by(symbol) %>%
-  arrange(date, .by_group = TRUE) %>%
-  filter(!is.na(adjusted)) %>%
-  mutate(indexed = (adjusted / first(adjusted)) * 100) %>%
-  mutate(tip = ...) %>%
-  ggplot(aes(x = date, y = indexed, color = symbol, group = symbol, text = tip)) +
-  geom_line(alpha = 1) +
-      theme_minimal() +
-      theme(
-        text = element_text(color = "white"),
-        axis.text = element_text(color = "white"),
-        panel.grid.major = element_line(color = "#444"),
-        panel.grid.minor = element_line(color = "#333")
-      ) +
-      labs(
-        title = "Share Price Performance Indexed to 100",
-        y = "Indexed Value",
-        x = "",
-        color = "Ticker"
-      )
-    
-    ggplotly(p, tooltip = "text") %>%
-      layout(paper_bgcolor = "rgba(0,0,0,0)", plot_bgcolor = "rgba(0,0,0,0)")
-  })
-  
-  # Volatility Plot
+  # Performance Comparison Plot (Stock price indexed to 100)
   output$relative_plot <- renderPlotly({
     req(all_data())
     
@@ -157,6 +126,30 @@ function(input, output, session) {
     
     ggplotly(p, tooltip = "text") %>%
       layout(paper_bgcolor = "rgba(0,0,0,0)", plot_bgcolor = "rgba(0,0,0,0)")
+  })
+  
+  # Volatility Plot
+  output$vol_plot <- renderPlotly({
+    req(returns_data())
+    
+    vol_data <- returns_data() %>%
+      summarise(stdev = sd(daily_return, na.rm = TRUE) * sqrt(252)) %>%
+      mutate(symbol = clean_ticker_names(symbol))
+    
+    p <- ggplot(vol_data, aes(x = reorder(symbol, stdev), y = stdev, fill = symbol)) +
+      geom_col() +
+      coord_flip() +
+      theme_minimal() +
+      theme(
+        text = element_text(color = "white"),
+        axis.text = element_text(color = "white"),
+        panel.grid.major = element_line(color = "#444")
+      ) +
+      labs(title = "Annualized Volatility", 
+           x = "Asset", y = "Annualized Standard Deviation")
+    
+    ggplotly(p) %>% 
+      layout(paper_bgcolor = 'rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
   })
   
   # Rolling Correlation Plot
