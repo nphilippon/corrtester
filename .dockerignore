@@ -1,1 +1,5 @@
-#starting point to not bloat the docker and make it slow
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
