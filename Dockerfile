@@ -1,12 +1,12 @@
 #FORCE TO LINUX CPU + RUN THE R SHINY APP 
-FROM --platform-linux/amd64 rocker/shiny-verse:latest
+FROM --platform=linux/amd64 rocker/shiny-verse:latest
 
 
 #HAVE PACMAN INSTLALL DEPENDENCIES ON SYSTEM
 RUN apt-get update && apt-get install -y \ 
   libssl-dev \
-  libcurl14-gnutls-dev \ 
-  libxm12-dev 
+  libcur4-gnutls-dev \ 
+  libxml2-dev 
   
 #COPY SHINY FILES INTO DOCKER CONTAINMENT
 COPY . /srv/shiny-app
