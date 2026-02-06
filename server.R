@@ -118,7 +118,7 @@ function(input, output, session) {
         panel.grid.minor = element_line(color = "#333")
       ) +
       labs(
-        title = "Share Price Performance Indexed to 100",
+        title = "Share Price Performance (Indexed to 100)",
         y = "Indexed Value",
         x = "",
         color = "Ticker"
@@ -145,11 +145,15 @@ function(input, output, session) {
         axis.text = element_text(color = "white"),
         panel.grid.major = element_line(color = "#444")
       ) +
-      labs(title = "Annualized Volatility", 
-           x = "Asset", y = "Annualized Standard Deviation")
+      labs(
+        title = "Annualized Volatility", 
+        x = "Asset", 
+        y = "Annualized Standard Deviation")
     
     ggplotly(p) %>% 
-      layout(paper_bgcolor = 'rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+      layout(showlegend = FALSE,
+             paper_bgcolor = 'rgba(0,0,0,0)', 
+             plot_bgcolor='rgba(0,0,0,0)')
   })
   
   # Rolling Correlation Plot

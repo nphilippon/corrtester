@@ -86,6 +86,7 @@ fluidPage(
               
               # Rolling Correlation
               column(width = 8, 
+                     h4("Rolling Correlation", style = "color: #e67e22;"),
                      div(class = "control-panel",
                          fluidRow(
                            column(width = 4,
@@ -99,8 +100,7 @@ fluidPage(
                                                max = 252))
                            )
                          ),
-                     h4("Rolling Correlation over Time", style = "color: #e67e22;"),
-                     plotlyOutput("rolling_corr_plot", height = "550px")
+                     plotlyOutput("rolling_corr_plot", height = "500px")
               )
             )
           )
