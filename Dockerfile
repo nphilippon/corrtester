@@ -6,7 +6,7 @@ FROM --platform-linux/amd64 rocker/shiny-verse:latest
 RUN apt-get update && apt-get install -y \ 
   libssl-dev \
   libcurl14-gnutls-dev \ 
-  libxm12-dev \ 
+  libxm12-dev 
   
 #COPY SHINY FILES INTO DOCKER CONTAINMENT
 COPY . /srv/shiny-app
