@@ -25,6 +25,7 @@ fluidPage(
     .selectize-dropdown-content{ max-height: 320px !important; }
   "))),
   
+  
   titlePanel("Energy Equity Sensitivies to Commodities"),
   
   fluidRow(
@@ -33,11 +34,18 @@ fluidPage(
       wellPanel(
         style = "background:#2e3338; border:1px solid #444; border-radius:14px;",
         
-        selectizeInput("tickers", "Select Assets:",
-                       choices = assets,
-                       selected = c("CVX", "CNQ.TO", "CL=F"),
-                       multiple = TRUE,
-                       options = list(placeholder = 'Select tickers')),
+        selectizeInput(
+          "tickers", "Select Assets:",
+          choices = assets,
+          selected = c("CVX", "CNQ.TO", "CL=F"),
+          multiple = TRUE,
+          options  = list(
+            placeholder = "Search / select assets",
+            plugins = list("remove_button"),
+            hideSelected = FALSE,
+            closeAfterSelect = FALSE
+          )
+        ),
         
         dateRangeInput(
           "dates", "Time Period:",
@@ -46,7 +54,6 @@ fluidPage(
         ),
         
         checkboxInput("show_actual_price", "Show actual price in tooltip", TRUE),
-        sliderInput("decimals", "Decimals (tooltip / table)", min = 0, max = 6, value = 2, step = 1),
         
         hr(),
         
