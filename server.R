@@ -23,7 +23,8 @@ function(input, output, session) {
         mutate_fun = periodReturn,
         period = "daily",
         col_rename = "daily_return"
-      )
+      ) %>% 
+      na.omit()
   })
   
   # Correlation Plot
@@ -37,6 +38,13 @@ function(input, output, session) {
     
     cor_matrix <- cor(wide_returns)
     
+    colnames(cor_matrix) <- case_when(
+      colnames(cor_matrix) == "DCOILWTICO" ~ "WTI OIL",
+      colnames(cor_matrix) == "DHHNGSP" ~ "NAT GAS",
+      colnames(cor_matrix) == "DCOILBRENTEU" ~ "BRENT",
+      TRUE ~ colnames(cor_matrix)
+    )
+    rownames(cor_matrix) <- colnames(cor_matrix)
     # Correlation Colouring 
     col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
     
@@ -76,8 +84,7 @@ function(input, output, session) {
         title = "Share Price Performance Indexed to 100", 
         y = "Indexed Value", 
         x = "",
-        color = "Ticker") +
-      scale_color_tq()
+        color = "Ticker")
     
     ggplotly(p) %>% 
       layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
