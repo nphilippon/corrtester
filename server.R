@@ -1,6 +1,5 @@
 library(shiny)
 
-# Define server logic required to draw a histogram
 function(input, output, session) {
 
   # Update Dropdown
@@ -9,7 +8,7 @@ function(input, output, session) {
                       choices = input$tickers[input$tickers != "USO"])
   })
   
-  # Get data
+  # Get reactive data
   all_data <- eventReactive(input$run_analysis, {
     req(input$tickers)
     get_data(input$tickers, input$dates[1], input$dates[2])
@@ -38,28 +37,50 @@ function(input, output, session) {
     
     cor_matrix <- cor(wide_returns)
     
-    # Correlation Colouring
+    # Correlation Colouring 
     col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
     
-    corrplot(cor_matrix, method = "shade", shade.col = NA, 
-             tl.col = "black", tl.srt = 45, addCoef.col = "black", 
-             cl.pos = "n", order = "hclust", col = col(200))
-  })
+    par(bg = "#272b30") # Background Colour
+    
+    corrplot(cor_matrix, 
+             method = "shade",  
+             shade.col = NA, 
+             tl.col = "white",  # Label Colour
+             tl.srt = 45,       # Label Rotation 
+             tl.cex = 1.4,      # Label Size
+             addCoef.col = "black", # Coefficient Colour
+             number.cex = 1.5,  # Coefficient Size
+             cl.pos = "n",      # Hide Legend
+             order = "hclust",  # Groups Similar
+             col = col(200),    # Gradient
+             mar = c(0, 0, 2, 0)) # Margins
+   })
   
-  # Performance Comparison
+  # Performance Comparison (Stock price indexed to 100)
   output$relative_plot <- renderPlotly({
     req(all_data())
     
-    p <- all_data %>%
+    p <- all_data() %>%
       group_by(symbol) %>%
       mutate(indexed = (adjusted / first(adjusted)) * 100) %>%
       ggplot(aes(x = date, y = indexed, color = symbol)) +
-      geom_line(alpha = 0.8) +
+      geom_line(alpha = 1) +
       theme_minimal() +
-      labs(title = "Performance Indexed to 100", y = "Index Value", x = "") +
+      theme(
+        text = element_text(color = "white"),
+        axis.text = element_text(color = "white"),
+        panel.grid.major = element_line(color = "#444"),
+        panel.grid.minor = element_line(color = "#333")
+      ) +
+      labs(
+        title = "Share Price Performance Indexed to 100", 
+        y = "Indexed Value", 
+        x = "",
+        color = "Ticker") +
       scale_color_tq()
     
-    ggplotly(p)
+    ggplotly(p) %>% 
+      layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
   })
   
   # Volatility Plot
@@ -82,5 +103,11 @@ function(input, output, session) {
   })
   
   output$corr_summary <- renderTable({
-  }, striped = TRUE)
+    req(returns_data())
+    wide_returns <- returns_data() %>%
+      pivot_wider(names_from = symbol, values_from = daily_return) %>%
+      select(-date) %>%
+      na.omit()
+    cor(wide_returns)
+  }, rownames = TRUE, striped = TRUE, spacing ='xs')
 }
