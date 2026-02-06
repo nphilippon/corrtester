@@ -89,7 +89,7 @@ assets <- list(
 tickers <- unlist(assets, use.names = FALSE)
 
 clean_ticker_names <- function(symbols) {
-  case_when(symbols == "CL=F" ~ "WTI", # Fix FRED symbols
+  case_when(symbols == "CL=F" ~ "WTI", # Fix Commodity Names
             symbols == "NG=F" ~ "NG",
             symbols == "BZ=F" ~ "BRENT",
             
