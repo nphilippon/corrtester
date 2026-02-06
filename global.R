@@ -33,6 +33,14 @@ assets <- list(
 
 tickers <- unlist(assets, use.names = FALSE)
 
+clean_ticker_names <- function(symbols) {
+  case_when(symbols == "DCOILWTICO" ~ "WTI",
+            symbols == "DHHNGSP" ~ "NG",
+            symbols == "DCOILBRENTEU" ~ "BRENT",
+            TRUE ~ symbols
+  )
+}
+
 # Get stock and commodity (FRED) data 
 get_data <- function(tickers, from, to) {
   

@@ -11,7 +11,21 @@ function(input, output, session) {
   # Get reactive data
   all_data <- eventReactive(input$run_analysis, {
     req(input$tickers)
-    get_data(input$tickers, input$dates[1], input$dates[2])
+    
+    data <- get_data(input$tickers, input$dates[1], input$dates[2])
+    
+    # Check for missing tickers
+    returned_tickers <- unique(data$symbol)
+    missing_tickers <- setdiff(input$tickers, returned_tickers)
+    
+    if (length(missing_tickers) > 0) {
+      showNotification(
+        paste("Warning: Unable to fetch data for", paste(missing_tickers, collapse = ", ")),
+        type = "warning",
+        duration = 10
+      )
+    }
+    data
   }, ignoreNULL = FALSE)
   
   # Calculate Returns
@@ -38,12 +52,9 @@ function(input, output, session) {
     
     cor_matrix <- cor(wide_returns)
     
-    colnames(cor_matrix) <- case_when(
-      colnames(cor_matrix) == "DCOILWTICO" ~ "WTI OIL",
-      colnames(cor_matrix) == "DHHNGSP" ~ "NAT GAS",
-      colnames(cor_matrix) == "DCOILBRENTEU" ~ "BRENT",
-      TRUE ~ colnames(cor_matrix)
-    )
+    colnames(cor_matrix) <- clean_ticker_names(colnames(cor_matrix))
+    rownames(cor_matrix) <- colnames(cor_matrix)
+    
     rownames(cor_matrix) <- colnames(cor_matrix)
     # Correlation Colouring 
     col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
@@ -69,7 +80,9 @@ function(input, output, session) {
     req(all_data())
     
     p <- all_data() %>%
+      mutate(symbol = clean_ticker_names(symbol)) %>% 
       group_by(symbol) %>%
+      filter(!is.na(adjusted)) %>% 
       mutate(indexed = (adjusted / first(adjusted)) * 100) %>%
       ggplot(aes(x = date, y = indexed, color = symbol)) +
       geom_line(alpha = 1) +
@@ -96,7 +109,8 @@ function(input, output, session) {
     
     # Calculate SD of returns
     vol_data <- returns_data() %>%
-      summarise(stdev = sd(daily_return, na.rm = TRUE) * sqrt(252)) # Annualized Vol
+      summarise(stdev = sd(daily_return, na.rm = TRUE) * sqrt(252)) %>% # Annualized Vol 
+      mutate(symbol = clean_ticker_names(symbol)) 
     
     p <- ggplot(vol_data, aes(x = reorder(symbol, stdev), y = stdev, fill = symbol)) +
       geom_col() +
@@ -115,6 +129,12 @@ function(input, output, session) {
       pivot_wider(names_from = symbol, values_from = daily_return) %>%
       select(-date) %>%
       na.omit()
-    cor(wide_returns)
+    
+    if (ncol(wide_returns) < 1) return(NULL)
+    
+    cor_res <- cor(wide_returns)
+    colnames(cor_res) <- clean_ticker_names(colnames(cor_res))
+    rownames(cor_res) <- colnames(cor_res)
+    cor_res
   }, rownames = TRUE, striped = TRUE, spacing ='xs')
 }

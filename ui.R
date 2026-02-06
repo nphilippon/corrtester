@@ -12,12 +12,12 @@ fluidPage(
         style = "background: #2e3338; border: 1px solid #444;",
         selectizeInput("tickers", "Select Assets:",
                        choices = assets,
-                       selected = c("XOM", "CNQ", "XLE", "USO"),
+                       selected = c("XOM", "CNQ", "DCOILWTICO"),
                        multiple = TRUE,
                        options = list(placeholder = 'Select tickers')),
         
         dateRangeInput("dates", "Time Period:",
-                       start = "2015-01-01",
+                       start = "2020-01-01",
                        end = Sys.Date()),
         
         hr(),
