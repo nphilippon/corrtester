@@ -4,14 +4,19 @@ function(input, output, session) {
 
   # Update Dropdown
   observe({
+    active_selection <- input$tickers
+    req(active_selection)
     updateSelectInput(session, "focus_asset",
-                      choices = input$tickers[input$tickers != "USO"])
+                      choices = active_selection)
+    updateSelectInput(session, "benchmark_asset",
+                      choices = active_selection)
   })
   
   # Get reactive data
   all_data <- eventReactive(input$run_analysis, {
     req(input$tickers)
     
+    fetch_list <- unique(c(input$tickers, input$benchmark_asset))
     data <- get_data(input$tickers, input$dates[1], input$dates[2])
     
     # Check for missing tickers
@@ -112,6 +117,7 @@ function(input, output, session) {
       summarise(stdev = sd(daily_return, na.rm = TRUE) * sqrt(252)) %>% # Annualized Vol 
       mutate(symbol = clean_ticker_names(symbol)) 
     
+    # Generate Chart
     p <- ggplot(vol_data, aes(x = reorder(symbol, stdev), y = stdev, fill = symbol)) +
       geom_col() +
       coord_flip() +
@@ -121,6 +127,52 @@ function(input, output, session) {
       scale_fill_tq()
     
     ggplotly(p)
+  })
+  
+  # Rolling Correlation Plot
+  output$rolling_corr_plot <- renderPlotly({
+    req(returns_data(), input$focus_asset, input$benchmark_asset)
+    
+    available_symbols <- unique(returns_data()$symbol)
+    req(input$focus_asset %in% available_symbols)
+    req(input$benchmark_asset %in% available_symbols)
+    
+    # Get Relevant Data
+    rolling_data <- returns_data() %>% 
+      filter(symbol %in% c(input$focus_asset, input$benchmark_asset)) %>% 
+      pivot_wider(names_from = symbol, values_from = daily_return) %>% 
+      na.omit()
+    
+    # Calculate rolling correlation
+    res <- rolling_data %>% 
+      mutate(
+        rolling_corr = TTR::runCor(
+          get(input$focus_asset),
+          get(input$benchmark_asset),
+          n = input$roll_window
+        )
+      ) %>% 
+      na.omit()
+    
+    # Generate rolling correlation plot
+    p <- ggplot(res, aes(x = date, y = rolling_corr)) +
+      geom_line(color = "#e67e22", size = 1) +
+      geom_hline(yintercept = 0, linetype = "dashed", color = "white", alpha = 0.5) +
+      geom_hline(yintercept = 0.5, linetype = "dotted", color = "#77AADD", alpha = 0.5) +
+      theme_minimal() +
+      theme(
+        text = element_text(color = "white"),
+        axis.text = element_text(color = "white"),
+        panel.grid.major = element_line(color = "#444")) +
+      labs(
+        title = paste(clean_ticker_names(input$focus_asset), "vs", clean_ticker_names(input$benchmark_asset)),
+        subtitle = paste(input$roll_window, "Day Rolling Correlation"),
+        y = "Correlation",
+        x = "") +
+      scale_y_continuous(limits = c(-1,1))
+  
+    ggplotly(p) %>% 
+      layout(paper_bgcolor = 'rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
   })
   
   output$corr_summary <- renderTable({
