@@ -59,8 +59,7 @@ fluidPage(
         
         helpText("Rolling Correlation Analysis", style = "font-size: 1.1em;"),
         selectInput("focus_asset", "Focus Asset:", choices = NULL),
-        selectInput("benchmark_asset", "Benchmark:",
-                    choices = c("WTI Crude" = "CL=F", "Nat Gas" = "NG=F", "Brent Crude" = "BZ=F")),
+        selectInput("benchmark_asset", "Benchmark Asset:", choices = NULL),
         numericInput("roll_window", "Rolling Correlation Window (days):", value = 60, min  = 10, max = 252),
         
         actionButton(
@@ -88,10 +87,10 @@ fluidPage(
           div(
             style = "background:#272b30; padding:20px; border:1px solid #444; border-top:none; border-radius:0 0 14px 14px;",
             fluidRow(
-              column(width = 7, 
+              column(width = 4, 
                      h4("Correlation Heatmap", style = "color: #e67e22;"), 
                      plotOutput("corr_plot", height = "550px")),
-              column(width = 5, 
+              column(width = 8, 
                      h4("Rolling Correlation over Time", style = "color: #e67e22;"),
                      plotlyOutput("rolling_corr_plot", height = "550px"))
             )
