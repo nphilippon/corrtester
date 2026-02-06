@@ -18,13 +18,13 @@ function(input, output, session) {
   returns_data <- reactive({
     all_data() %>%
       group_by(symbol) %>%
+      filter(!is.na(adjusted)) %>% 
       tq_transmute(
         select = adjusted,
         mutate_fun = periodReturn,
         period = "daily",
         col_rename = "daily_return"
-      ) %>% 
-      na.omit()
+      )
   })
   
   # Correlation Plot

@@ -57,7 +57,8 @@ get_data <- function(tickers, from, to) {
     commodity_raw <- tq_get(fred_tickers,
                            get = "economic.data",
                            from = from,
-                           to = to)
+                           to = to) %>% 
+      na.omit()
     
     if (nrow(commodity_raw) > 0 && "price" %in% colnames(commodity_raw)) {
       commodity_data <- commodity_raw %>% 
