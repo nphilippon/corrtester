@@ -12,7 +12,7 @@ fluidPage(
         style = "background: #2e3338; border: 1px solid #444;",
         selectizeInput("tickers", "Select Assets:",
                        choices = assets,
-                       selected = c("XOM", "CNQ.TO", "DCOILWTICO"),
+                       selected = c("CVX", "CNQ.TO", "CL=F"),
                        multiple = TRUE,
                        options = list(placeholder = 'Select tickers')),
         

@@ -8,11 +8,11 @@ library(corrplot)
 
 # Supported assets list (will expand)
 assets <- list(
-  "Commodity Spot Prices" = c(
-    "WTI Crude Oil" = "DCOILWTICO",
-    "Natural Gas (Henry Hub)" = "DHHNGSP",
+  "Commodity Futures Prices" = c(
+    "WTI Crude Oil" = "CL=F",
+    "Natural Gas (Henry Hub)" = "NG=F",
     # "WCS Crude Oil" = "WCS", Will do later
-    "Brent Crude Oil" = "DCOILBRENTEU"
+    "Brent Crude Oil" = "BZ=F"
   ),
   "Canadian Large-Cap E&Ps" = c(
     "Canadian National Resources" = "CNQ.TO",
@@ -89,48 +89,20 @@ assets <- list(
 tickers <- unlist(assets, use.names = FALSE)
 
 clean_ticker_names <- function(symbols) {
-  case_when(symbols == "DCOILWTICO" ~ "WTI", # Fix FRED symbols
-            symbols == "DHHNGSP" ~ "NG",
-            symbols == "DCOILBRENTEU" ~ "BRENT",
+  case_when(symbols == "CL=F" ~ "WTI", # Fix FRED symbols
+            symbols == "NG=F" ~ "NG",
+            symbols == "BZ=F" ~ "BRENT",
             
             TRUE ~ gsub("\\.TO$", "", symbols) # Remove ".TO" from Canadian Tickers
   )
 }
 
-# Get stock and commodity (FRED) data 
+# Get stock and commodity data 
 get_data <- function(tickers, from, to) {
-  
-  # FRED Tickers here
-  fred_codes <- c("DCOILWTICO", "DHHNGSP", "DCOILBRENTEU")
-  fred_tickers <- tickers[tickers %in% fred_codes]
-  stock_tickers <- tickers[!tickers %in% fred_codes]
-  
-  stock_data <- tibble()
-  commodity_data <- tibble()
-  
-  # Get Stock Data
-  if (length(stock_tickers) > 0) {
-    stock_data <- tq_get(stock_tickers,
-                         get = "stock.prices",
-                         from = from, 
-                         to = to)
-  }
-  
-  # Get FRED Data
-  if (length(fred_tickers) > 0) {
-    commodity_raw <- tq_get(fred_tickers,
-                           get = "economic.data",
-                           from = from,
-                           to = to) %>% 
-      na.omit()
-    
-    if (nrow(commodity_raw) > 0 && "price" %in% colnames(commodity_raw)) {
-      commodity_data <- commodity_raw %>% 
-        rename(adjusted = price)
-    }
-  }
-  
-  bind_rows(stock_data, commodity_data) %>% 
+    tq_get(tickers,
+           get = "stock.prices",
+           from = from, 
+           to = to) %>% 
+    na.omit() %>% 
     arrange(symbol, date)
-  
 }
