@@ -37,7 +37,7 @@ fluidPage(
         selectizeInput(
           "tickers", "Select Assets:",
           choices = assets,
-          selected = c("CVX", "CNQ.TO", "CL=F"),
+          selected = c("CVX", "CNQ.TO", "CL=F", "XLE"),
           multiple = TRUE,
           options  = list(
             placeholder = "Select assets",
@@ -69,48 +69,74 @@ fluidPage(
   
   # Analytics Tabs
   fluidRow(
-    column(
-      width = 12,
-      tabsetPanel(
-        tabPanel(
-          "Correlation",
-          div(
-            style = "background:#272b30; padding:20px; border:1px solid #444; border-top:none; border-radius:0 0 14px 14px;",
-            fluidRow(
-              # Correlation Matrix
-              column(width = 4, 
-                     h4("Correlation Heatmap", style = "color: #EBF38B ;"), 
-                     plotOutput("corr_plot", height = "550px"),
-                     br(),
-              ),
-              
-              # Rolling Correlation
-              column(width = 8, 
-                     h4("Rolling Correlation", style = "color: #EBF38B;"),
-                     div(class = "control-panel",
-                         fluidRow(
-                           column(width = 4,
-                                  selectInput("focus_asset", "Focus Asset:", choices = NULL)),
-                           column(width = 4,
-                                  selectInput("benchmark_asset", "Benchmark Asset:", choices = NULL)),
-                           column(width = 4,
-                                  numericInput("roll_window", "Rolling Correlation Window (days):", 
-                                               value = 60,
-                                               min = 10,
-                                               max = 252))
-                           )
-                         ),
-                     plotlyOutput("rolling_corr_plot", height = "500px")
-              )
-            )
-          )
-        ),
-        tabPanel("Risk & Volatility", 
-                 div(style = "background: #272b30; padding: 20px; border: 1px solid #444; border-top: none;",
-                  plotlyOutput("vol_plot", height = "500px")
-                 )
-        )
-      )
-      )
+    column(width = 12,
+           tabsetPanel(
+             # Correlation Tab
+             tabPanel("Correlation",
+                      div(
+                        style = "background:#272b30; padding:20px; border:1px solid #444; border-top:none; border-radius:0 0 14px 14px;",
+                        fluidRow(
+                          column(width = 4,
+                                 # Correlation Matrix (left side)
+                                 h4("Correlation Heatmap", style = "color: #EBF38B ;"),
+                                 # Output Chart
+                                 plotOutput("corr_plot", height = "550px"),
+                                 br()
+                                 ),
+                          column(width = 8,
+                                 # Rolling Correlation (right side)
+                                 h4("Rolling Correlation", style = "color: #EBF38B;"),
+                                 div(class = "control-panel",
+                                     # Make inputs for focus asset, benchmark asset, and rolling corr window
+                                     fluidRow(
+                                       column(width = 4,
+                                              selectInput("focus_asset", "Focus Asset:", choices = NULL)),
+                                       column(width = 4,
+                                              selectInput("benchmark_asset", "Benchmark Asset:", choices = NULL)),
+                                       column(width = 4,
+                                              numericInput("roll_window", "Rolling Correlation Window (days):",
+                                                           value = 60,
+                                                           min = 10,
+                                                           max = 252)) # 252 = approx. trading days in a year
+                                       )
+                                     ),
+                                 # Output Chart
+                                 plotlyOutput("rolling_corr_plot", height = "500px")
+                                 )
+                          )
+                        )
+                      ),
+             # Risk & Volatility Tab
+             tabPanel("Risk & Volatility",
+                      div(style = "background: #272b30; padding: 20px; border: 1px solid #444; border-top: none;",
+                          # Output Chart
+                          plotlyOutput("vol_plot", height = "500px")
+                          )
+                      ),
+             # Portfolio Backtesting Tab
+             tabPanel("Portfolio Backtesting",
+                      div(style = "background: #272b30; padding: 20px; border: 1px solid #444; border-top: none;",
+                          fluidRow(
+                            # Portfolio Setup Options
+                            column(width = 4,
+                                   wellPanel(
+                                     style = "background:#2e3338; border:1px solid #444;",
+                                     h4("Portfolio Allocation", style = "color: #EBF38B;"),
+                                     helpText("Assign weights to selected equities (total to 100%)."),
+                                     uiOutput("weight_inputs"),
+                                     hr(),
+                                     actionButton("run_backtest", "Run Backtest", class = "btn-warning btn-block")
+                                   )
+                            ),
+                            # Show Portfolio Chart
+                            column(width = 8,
+                                   h4("Cumulative Returns vs Benchmarks", style = "color #EBF38B;"),
+                                   plotlyOutput("backtest_plot", height = "500px")
+                            )
+                          )
+                      )
+             )
+           )
     )
   )
+)

@@ -157,7 +157,9 @@ function(input, output, session) {
              plot_bgcolor='rgba(0,0,0,0)')
   })
   
-  # Rolling Correlation Plot
+# Rolling Correlations
+  
+  # Get Rolling Correlation Data
   output$rolling_corr_plot <- renderPlotly({
     req(returns_data(), input$focus_asset, input$benchmark_asset)
     
@@ -173,6 +175,7 @@ function(input, output, session) {
     req(input$focus_asset %in% colnames(rolling_data))
     req(input$benchmark_asset %in% colnames(rolling_data))
     
+    # Calculate Rolling Correlation using TTR::runCor()
     res <- rolling_data %>% 
       mutate(
         rolling_corr = TTR::runCor(
@@ -183,6 +186,7 @@ function(input, output, session) {
       ) %>% 
       na.omit()
     
+    # Generate Rolling Corr Chart
     p <- ggplot(res, aes(x = date, y = rolling_corr)) +
       geom_line(color = "#e67e22", size = 1) +
       geom_hline(yintercept = 0, linetype = "dashed", color = "white", alpha = 0.5) +
@@ -203,4 +207,106 @@ function(input, output, session) {
       layout(paper_bgcolor = 'rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
   })
 
+# Portfolio Backtesting (Using Tidyquant Portfolio)
+  
+  # Weight Input
+  output$weight_inputs <- renderUI({
+    req(input$tickers)
+    
+    # Filtering out commodities and indexes for now but we could put back in
+    benchmarks <- c("CL=F", "NG=F", "BZ=F", "XLE")
+    equities <- input$tickers[!input$tickers %in% benchmarks]
+    
+    if (length(equities) == 0)
+      return(helpText("Please select at least one equity asset to build a portfolio."))
+    
+    # Set Default Weight
+    default_weight <- round(100 / length(equities), 1)
+    
+    tagList(
+      lapply(equities, function(ticker) {
+        # Adds new weight selection box for each selected stock
+        numericInput(paste0("weight_", ticker),
+                     label = paste(clean_ticker_names(ticker), "(%)"),
+                     value = default_weight, min = 0, max = 100)
+      })
+    )
+    
+  })
+  
+ # Calculate Portfolio Performance
+  backtest_results <- eventReactive(input$run_backtest, {
+    req(returns_data())
+    benchmarks <- c("CL=F", "NG=F", "BZ=F", "XLE")
+    equities <- input$tickers[!input$tickers %in% benchmarks]
+    
+    # Get Weights
+    weights <- sapply(equities, function(t) input[[paste0("weight_", t)]])
+    if (sum(weights) == 0) 
+      return(NULL)
+    
+    # Normalize Weights
+    weights_norm <- weights / sum(weights)
+    
+    # Make portfolio_returns df for tidyquant portfolio
+    portfolio_returns <- returns_data() %>% 
+      filter(symbol %in% equities) %>% 
+      tq_portfolio(
+        assets_col = symbol,
+        returns_col = daily_return,
+        weights = weights_norm,
+        col_rename = "investment_return",
+        rebalance_on = "quarters"    # Rebalances Monthly (can maybe make this changeable later)
+      ) %>% 
+      # Calculate Investment Return
+      mutate(cum_return = cumprod(1 + investment_return) * 100,
+             type = "Custom Portfolio")
+    
+    # Benchmark against WTI
+    wti_returns <- returns_data() %>% 
+      filter(symbol == "CL=F") %>% 
+      mutate(cum_return = cumprod(1 + daily_return) * 100, type = "WTI Crude Oil")
+    
+    # Benchmark against XLE Index (if selected)
+    xle_returns <- returns_data() %>% 
+      filter(symbol == "XLE") %>% 
+      mutate(cum_return = cumprod(1 + daily_return) * 100, type = "XLE Energy Index")
+    
+    # Combine
+    bind_rows(
+      portfolio_returns %>% 
+        select(date, cum_return, type),
+      wti_returns %>% 
+        select(date, cum_return, type),
+      xle_returns %>% 
+        select(date, cum_return, type)
+    )
+  })
+  
+  # Generate Portfolio Chart
+  output$backtest_plot <- renderPlotly({
+    req(backtest_results())
+    
+    p <- ggplot(backtest_results(), aes(x = date, y = cum_return, color = type)) +
+      geom_line(size = 1) +
+      theme_minimal() +
+      theme(
+        text = element_text(color = "white"),
+        axis.text = element_text(color = "white"),
+        panel.grid.major = element_line(color = "#444")) +
+      labs(
+        title = "Portfolio Backtesting (Growth of $100)",
+        subtitle = "Comparison vs WTI & XLE",
+        y = "Cumulative Holdings Value ($)",
+        x = "") +
+      scale_color_manual(
+        values = c(
+          "Custom Portfolio" = "#EBF38B",
+          "WTI Crude Oil" = "#77AADD",
+          "XLE Energy Index" = "#e67e22")
+        )
+    
+    ggplotly(p) %>% 
+      layout(paper_bgcolor = 'rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+  })
 }
