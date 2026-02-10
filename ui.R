@@ -22,7 +22,7 @@ fluidPage(
       max-width: 320px !important;
       z-index: 2000 !important;
     }
-    .selectize-dropdown-content{ max-height: 320px !important; }
+    .selectize-dropdown-content{ max-height: 450px !important; }
   "))),
   
   
@@ -79,14 +79,14 @@ fluidPage(
             fluidRow(
               # Correlation Matrix
               column(width = 4, 
-                     h4("Correlation Heatmap", style = "color: #e67e22;"), 
+                     h4("Correlation Heatmap", style = "color: #EBF38B ;"), 
                      plotOutput("corr_plot", height = "550px"),
                      br(),
               ),
               
               # Rolling Correlation
               column(width = 8, 
-                     h4("Rolling Correlation", style = "color: #e67e22;"),
+                     h4("Rolling Correlation", style = "color: #EBF38B;"),
                      div(class = "control-panel",
                          fluidRow(
                            column(width = 4,

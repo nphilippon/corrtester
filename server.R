@@ -5,13 +5,14 @@ function(input, output, session) {
   # Update Dropdown
   observe({
     active_selection <- input$tickers
-    
     req(active_selection)
     
+    clean_active_selection <- setNames(active_selection, clean_ticker_names(active_selection))
+    
     updateSelectInput(session, "focus_asset",
-                      choices = active_selection)
+                      choices = clean_active_selection)
     updateSelectInput(session, "benchmark_asset",
-                      choices = active_selection)
+                      choices = clean_active_selection)
   })
   
   # Get reactive data
@@ -61,7 +62,6 @@ function(input, output, session) {
     colnames(cor_matrix) <- clean_ticker_names(colnames(cor_matrix))
     rownames(cor_matrix) <- colnames(cor_matrix)
     
-    rownames(cor_matrix) <- colnames(cor_matrix)
     # Correlation Colouring 
     col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
     
@@ -143,7 +143,8 @@ function(input, output, session) {
       theme(
         text = element_text(color = "white"),
         axis.text = element_text(color = "white"),
-        panel.grid.major = element_line(color = "#444")
+        panel.grid.major = element_line(color = "#444"),
+        legend.position = "none"
       ) +
       labs(
         title = "Annualized Volatility", 
@@ -201,19 +202,5 @@ function(input, output, session) {
     ggplotly(p) %>% 
       layout(paper_bgcolor = 'rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
   })
-  
-  output$corr_summary <- renderTable({
-    req(returns_data())
-    wide_returns <- returns_data() %>%
-      pivot_wider(names_from = symbol, values_from = daily_return) %>%
-      select(-date) %>%
-      na.omit()
-    
-    if (ncol(wide_returns) < 1) return(NULL)
-    
-    cor_res <- cor(wide_returns)
-    colnames(cor_res) <- clean_ticker_names(colnames(cor_res))
-    rownames(cor_res) <- colnames(cor_res)
-    round(cor_res, 2)
-  }, rownames = TRUE, striped = TRUE, spacing ='xs')
+
 }
