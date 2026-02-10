@@ -6,14 +6,8 @@ library(plotly)
 library(tidyquant)
 library(corrplot)
 
-# Supported assets list (will expand)
-assets <- list(
-  "Commodity Futures Prices" = c(
-    "WTI Crude Oil" = "CL=F",
-    "Natural Gas (Henry Hub)" = "NG=F",
-    # "WCS Crude Oil" = "WCS", Will do later
-    "Brent Crude Oil" = "BZ=F"
-  ),
+# Supported Equities
+equity_list <- list(
   "Canadian Large-Cap E&Ps" = c(
     "Canadian National Resources" = "CNQ.TO",
     "Suncor Energy" = "SU.TO",
@@ -80,14 +74,33 @@ assets <- list(
     "Ovintiv" = "OVV",
     "Antero Resources" = "AR",
     "APA Corp" = "APA"
-  ),
-  "Sector Indexes" = c(
-    "Energy Sector ETF" = "XLE"
   )
 )
 
-tickers <- unlist(assets, use.names = FALSE)
+# Supported Commodities
+commodity_list <- list(
+  "Commodity Futures (Forward Month)" = c(
+    "WTI Crude Oil" = "CL=F",
+    "Natural Gas (Henry Hub)" = "NG=F",
+    # "WCS Crude Oil" = "WCS", Will do later
+    "Brent Crude Oil" = "BZ=F"
+  )
+)
 
+# Supported Indexes
+index_list <- list(
+  "Sector & Market Indexes" = c(
+    "US Energy Sector (XLE)" = "XLE",
+    "Canadian Energy Sector (XEG)" = "XEG.TO",
+    "S&P 500" = "SPY",
+    "Russel 2000" = "RUT"
+  )
+)
+
+
+# tickers <- unlist(assets, use.names = FALSE) (idk if i still need)
+
+# Helper func for cleaning commodity & .TO ticker names
 clean_ticker_names <- function(symbols) {
   case_when(symbols == "CL=F" ~ "WTI", # Fix Commodity Names
             symbols == "NG=F" ~ "NG",
@@ -97,12 +110,11 @@ clean_ticker_names <- function(symbols) {
   )
 }
 
-# Get stock and commodity data 
+# Get data
 get_data <- function(tickers, from, to) {
     tq_get(tickers,
            get = "stock.prices",
            from = from, 
            to = to) %>% 
-    na.omit() %>% 
     arrange(symbol, date)
 }

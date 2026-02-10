@@ -1,6 +1,10 @@
 library(shiny)
 library(shinythemes)
 
+# Colors
+# Light Green: #EBF38B (Section Titles)
+# Background: #272b30 (Matches Slate)
+
 fluidPage(
   theme = shinytheme("slate"),
   
@@ -14,14 +18,18 @@ fluidPage(
       color:#111827 !important;
       border:1px solid #cbd5e1 !important;
     }
-    .selectize-control .selectize-input input{ color:#111827 !important; }
 
-    /* Narrow dropdown so it doesn't cover the plot too much */
+    /* Narrow dropdowns so it doesn't cover the plot too much */
     .selectize-dropdown{
       width: 320px !important;
       max-width: 320px !important;
       z-index: 2000 !important;
     }
+    
+    .well {
+    background:#2e3338; 
+    border:1px solid #444; 
+    border-radius:14px; }
     .selectize-dropdown-content{ max-height: 450px !important; }
   "))),
   
@@ -32,36 +40,53 @@ fluidPage(
   fluidRow(
     column(width = 3,
       wellPanel(
-        style = "background:#2e3338; border:1px solid #444; border-radius:14px;",
+        h4("Asset Selection", style = "color: #EBF38B; margin-top:0;"),
         
-        selectizeInput(
-          "tickers", "Select Assets:",
-          choices = assets,
-          selected = c("CVX", "CNQ.TO", "CL=F", "XLE"),
-          multiple = TRUE,
-          options  = list(
-            placeholder = "Select assets",
-            plugins = list("remove_button"),
-            hideSelected = FALSE,
-            closeAfterSelect = FALSE
-          )
-        ),
+        # Equity Selection Dropdown
+        selectizeInput("equities", "Select Equities:",
+                       choices = equity_list,
+                       selected = c("CNQ.TO", "SU.TO"),
+                       multiple = TRUE,
+                       options = list(
+                         hideSelected = FALSE,
+                         plugins = list(
+                           "remove_button"))),
         
-        dateRangeInput(
-          "dates", "Time Period:",
-          start = "2020-01-01",
+        # Commodity Selection Dropdown
+        selectizeInput("commodities", "Select Commodities:",
+                       choices = commodity_list,
+                       selected = "CL=F",
+                       multiple = TRUE,
+                       options = list(
+                         hideSelected = FALSE,
+                         plugins = list(
+                           "remove_button"))),
+        
+        # Index Selection Dropdown
+        selectizeInput("indexes", "Select Indexes",
+                       choices = index_list,
+                       selected = "XEG.TO",
+                       multiple = TRUE,
+                       options = list(
+                         hideSelected = FALSE,
+                         plugins = list(
+                           "remove_button"))),
+        
+        # Date Selection
+        dateRangeInput("dates", "Time Period:",
+          start = "2023-01-01",
           end = Sys.Date()
         ),
         
-        checkboxInput("show_actual_price", "Show actual price in tooltip", TRUE),
+        hr(),
         
-        hr()
+        checkboxInput("show_actual_price", "Show actual price in tooltip", TRUE)
       )
     ),
     # Relative Price Chart
     column(
       width = 9,
-      plotlyOutput("relative_plot", height = "400px")
+      plotlyOutput("relative_plot", height = "450px")
     )
   ),
   
@@ -95,7 +120,7 @@ fluidPage(
                                               selectInput("benchmark_asset", "Benchmark Asset:", choices = NULL)),
                                        column(width = 4,
                                               numericInput("roll_window", "Rolling Correlation Window (days):",
-                                                           value = 60,
+                                                           value = 90,
                                                            min = 10,
                                                            max = 252)) # 252 = approx. trading days in a year
                                        )
