@@ -31,6 +31,16 @@ fluidPage(
     border:1px solid #444; 
     border-radius:14px; }
     .selectize-dropdown-content{ max-height: 450px !important; }
+    
+    /* Make auto-balanced weight plug box non-editable */
+    .locked-input {
+      pointer-events: none;
+      opacity: 0.7;
+    }
+    .locked-input input {
+      background-color: #3e444c !important;
+      color: #9ca3af !important;
+    }
   "))),
   
   
@@ -155,7 +165,7 @@ fluidPage(
                             ),
                             # Show Portfolio Chart
                             column(width = 8,
-                                   h4("Cumulative Returns vs Benchmarks", style = "color #EBF38B;"),
+                                   h4("Cumulative Returns vs Benchmarks", style = "color: #EBF38B;"),
                                    plotlyOutput("backtest_plot", height = "500px")
                             )
                           )

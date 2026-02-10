@@ -227,36 +227,102 @@ function(input, output, session) {
   output$weight_inputs <- renderUI({
     req(input$equities)
     
+    tickers <- input$equities
+    n <- length(tickers)
+    
     # Set Default Weight
     default_weight <- round(100 / length(input$equities), 1)
     
     # Add new weight input box for each selected equity
     tagList(
-      lapply(input$equities, function(ticker) {
-        numericInput(paste0("weight_", ticker),
-                     label = paste(clean_ticker_names(ticker), "(%)"),
+      lapply(seq_along(tickers), function(i) {
+        ticker <- tickers[i]
+        label_text <- paste(clean_ticker_names(ticker), "(%)") # Set Clean ticker names
+        
+        # If equity is the last selected and we have at least 2, lock input (to use as auto balancing plug)
+        if(i == n && n > 1) {
+          numericInput(paste0("weight_", ticker),
+                     label = paste(label_text, "- Auto-Balanced"),
                      value = default_weight, 
                      min = 0, 
-                     max = 100)
+                     max = 100) %>% 
+            # Add new CSS class to disable interaction
+            shiny::tagAppendAttributes(class = "locked-input")
+        }
+        else {
+          # Make weight input boxes for the rest
+          numericInput(paste0("weight_", ticker),
+                       label = label_text,
+                       value = default_weight, 
+                       min = 0, 
+                       max = 100)
+        }
       }))
   })
+  
+  # Automatic Weight Balancing (Last asset set so total = 100%)
+  observe({
+    req(input$equities)
+    
+    # Get # of equities selected
+    n <- length(input$equities)
+    
+    # Make sure at least 2 equities selected
+    if (n < 2)
+      return()
+    
+    # Set last selected asset to plug, and the rest as inputs
+    last_ticker <- input$equities[n]
+    other_tickers <- input$equities[1:(n-1)]
+    
+    # Calculate sum of inputted weights
+    sum_others <- sum(sapply(other_tickers, function(ticker) {
+      value <- input[[paste0("weight_", ticker)]]
+      # Set blank weights to 0
+      if (is.null(value) || is.na(value))
+        0
+      else
+        value
+    }))
+    
+    # Calculate remaining weight
+    remaining_weight <- max(0, 100 - sum_others)
+    
+    # Update/Overwrite last input box value
+    updateNumericInput(session, paste0("weight_", last_ticker), value = remaining_weight)
+  })
 
- # Calculate Portfolio Performance
+  # Calculate Portfolio Performance
   backtest_results <- eventReactive(input$run_backtest, {
     req(returns_data())
     
-    # Get Weights
-    weights <- sapply(input$equities, function(ticker) input[[paste0("weight_", ticker)]])
+    # Filter returns for selected equities
+    equity_returns <- returns_data() %>% 
+      ungroup() %>% 
+      filter(symbol %in% input$equities)
+    
+    # Check symbols for returns data
+    available_tickers <- unique(equity_returns$symbol)
+    if (length(available_tickers) == 0)
+      return(NULL)
+    
+    # Get Weights for available equities
+    weights <- sapply(input$equities, function(ticker) {
+      value <- input[[paste0("weight_", ticker)]]
+      if (is.null(value) || is.na(value))
+        0
+      else
+        value
+    })
+    
     if (sum(weights) == 0) 
       return(NULL)
     
-    # Normalize Weights
+    # Normalize Weights to exactly 1.0
     weights_norm <- weights / sum(weights)
     
     # Setup Tidyquant portfolio
-    portfolio_returns <- returns_data() %>% 
-      ungroup() %>% 
-      filter(symbol %in% input$equities) %>% 
+    portfolio_returns <- equity_returns %>% 
       tq_portfolio(
         assets_col = symbol,
         returns_col = daily_return,
