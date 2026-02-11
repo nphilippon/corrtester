@@ -228,7 +228,6 @@ function(input, output, session) {
     # Generate Rolling Corr Chart
     p <- ggplot(res, aes(x = date, y = rolling_corr)) +
       geom_line(color = "#e67e22", size = 1) +
-      geom_hline(yintercept = 0, linetype = "dashed", color = "white", alpha = 0.5) +
       geom_hline(yintercept = avg_corr, linetype = "dotted", color = "#EBF38B", alpha = 0.8) +
       theme_minimal() +
       theme(
@@ -236,13 +235,15 @@ function(input, output, session) {
         axis.text = element_text(color = "white"),
         panel.grid.major = element_line(color = "#444")) +
       labs(
-        title = paste(clean_ticker_names(input$focus_asset), "vs", clean_ticker_names(input$benchmark_asset), "Rolling Correlation Trend"),
-        subtitle = paste(input$roll_window, "Day Rolling Correlation"),
         y = "Correlation",
         x = "")
     
     ggplotly(p) %>% 
       layout(paper_bgcolor = 'rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+             title = list(
+               text = paste0("<span style='color:white; font-size:12px;'>", clean_ticker_names(input$focus_asset), " vs ", clean_ticker_names(input$benchmark_asset), " (", input$roll_window, "-day rolling correlation)", "</span>"),
+               x = 0.06, y = 1.05, xanchor = 'left'
+             ),
              margin = list(l = 70, r = 20, t = 30, b = 0)
       )
   })
