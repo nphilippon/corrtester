@@ -44,9 +44,9 @@ fluidPage(
     /* Formatting for stacked charts */
     .chart-label { 
       color: #EBF38B; font-weight: bold; 
-      margin-bottom: 5px; margin-top: 
-      15px; text-transform: uppercase; 
-      font-size: 1.5rem; letter-spacing: 1px; }
+      margin-bottom: 5px; margin-top: 15px; 
+      text-transform: uppercase; 
+      font-size: 1.8rem; letter-spacing: 1px; }
     
     /* Formatting for header */
     .app-header {
