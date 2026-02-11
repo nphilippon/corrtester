@@ -43,14 +43,32 @@ fluidPage(
     }
     /* Formatting for stacked charts */
     .chart-label { 
-    color: #EBF38B; font-weight: bold; 
-    margin-bottom: 5px; margin-top: 
-    15px; text-transform: uppercase; 
-    font-size: 1.5rem; letter-spacing: 1px; }
+      color: #EBF38B; font-weight: bold; 
+      margin-bottom: 5px; margin-top: 
+      15px; text-transform: uppercase; 
+      font-size: 1.5rem; letter-spacing: 1px; }
+    
+    /* Formatting for header */
+    .app-header {
+      padding: 10px 0;
+      border-bottom: 2px solid #EBF38B;
+      margin-bottom: 10px;}
+    .app-title { 
+      margin: 0; 
+      font-weight: 700; 
+      color: #f8fafc; }
+    .app-subtitle { 
+      margin: 5px 0 0 0; 
+      color: #94a3b8; 
+      font-size: 1.1rem; }
   "))),
   
   
-  titlePanel("Energy Equity Sensitivies to Commodities"),
+  # Header
+  div(class = "app-header",
+      h2(class = "app-title", "Energy Sector Correlation Dashboard"),
+      p(class = "app-subtitle", "Correlation Analysis between Energy Equities, Commodities, and Indexes")
+  ),
   
   # Global Asset and Date Inputs
   fluidRow(
