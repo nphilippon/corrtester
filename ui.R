@@ -61,7 +61,7 @@ fluidPage(
         # Equity Selection Dropdown
         selectizeInput("equities", "Select Equities:",
                        choices = equity_list,
-                       selected = c("CNQ.TO", "SU.TO"),
+                       selected = c("CVE.TO", "SU.TO"),
                        multiple = TRUE,
                        options = list(
                          hideSelected = FALSE,

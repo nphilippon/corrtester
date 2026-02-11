@@ -14,14 +14,20 @@ function(input, output, session) {
     
     # Set clean ticker names
     clean_labels <- clean_ticker_names(tickers)
-    
-    # Use Clean names
     asset_choices <- setNames(tickers, clean_labels)
     
+    # Set Initial Defaults
+    current_focus <- input$focus_asset
+    current_benchmark <- input$benchmark_asset
+    initial_focus <- if (is.null(current_focus) || current_focus == "") "CVE.TO"
+    else current_focus
+    initial_benchmark <- if (is.null(current_benchmark) || current_benchmark == "") "CL=F"
+    else current_benchmark
+    
     updateSelectInput(session, "focus_asset",
-                      choices = asset_choices)
+                      choices = asset_choices, selected = initial_focus)
     updateSelectInput(session, "benchmark_asset",
-                      choices = asset_choices)
+                      choices = asset_choices, selected = initial_benchmark)
   })
   
   # Get reactive data
