@@ -103,6 +103,8 @@ function(input, output, session) {
   output$relative_plot <- renderPlotly({
     req(all_data())
     
+    show_actual_price = TRUE
+    
     # Prepare data
     p <- all_data() %>%
       mutate(symbol = clean_ticker_names(symbol)) %>% # Use Clean names
@@ -110,7 +112,7 @@ function(input, output, session) {
       filter(!is.na(adjusted)) %>%
       mutate(indexed = (adjusted / first(adjusted)) * 100) %>%
       mutate(
-        tip = if (isTRUE(input$show_actual_price)) {
+        tip = if (isTRUE(show_actual_price)) {
           paste0(
             # Show actual price and indexed value in tooltip
             "date: ", date,

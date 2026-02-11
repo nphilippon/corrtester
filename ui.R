@@ -102,8 +102,7 @@ fluidPage(
         selectInput("benchmark_asset", "Benchmark:", choices = NULL),
         numericInput("roll_window", "Rolling Correlation Window (days):", value = 90, min = 10),
         
-        hr(style = "border-color: #444;"),
-        checkboxInput("show_actual_price", "Show actual price in tooltip", TRUE)
+        hr(style = "border-color: #444;")
       )
     ),
     
