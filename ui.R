@@ -97,10 +97,17 @@ fluidPage(
         hr(style = "border-color: #444;"),
         
         # Rolling Correlation Controls
-        h4("Correlation Signal Analysis Tools", style = "color: #EBF38B;"),
+        h4("Rolling Correlation Analysis", style = "color: #EBF38B;"),
         selectInput("focus_asset", "Target Asset:", choices = NULL),
         selectInput("benchmark_asset", "Benchmark:", choices = NULL),
-        numericInput("roll_window", "Rolling Correlation Window (days):", value = 90, min = 10),
+        numericInput("roll_window", "Rolling Correlation Window (days):", value = 90, min = 5),
+        hr(style = "border-color: #444;"),
+        
+        # Return Differential Controls
+        h4("Return Differential Analysis", style = "color: #EBF38B;"),
+        selectInput("return_freq", "Return Frequency:",
+                    choices = c("Daily" = "daily", "Weekly" = "weekly", "Monthly" = "monthly"),
+                    selected = "daily"),
         
         hr(style = "border-color: #444;")
       )

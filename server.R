@@ -45,7 +45,7 @@ function(input, output, session) {
     data
   })
   
-  # Calculate Returns
+  # Calculate Daily Returns
   returns_data <- reactive({
     all_data() %>%
       group_by(symbol) %>%
@@ -56,6 +56,19 @@ function(input, output, session) {
         period = "daily",
         col_rename = "daily_return"
       )
+  })
+    
+    # Calculate Periodic Returns (weekly/monthly)
+    returns_data_periodic <- reactive({
+      all_data() %>%
+        group_by(symbol) %>%
+        filter(!is.na(adjusted)) %>% 
+        tq_transmute(
+          select = adjusted,
+          mutate_fun = periodReturn,
+          period = input$return_freq,
+          col_rename = "periodic_return"
+        )
   })
   
 # Correlation Matrix
@@ -139,7 +152,6 @@ function(input, output, session) {
         panel.grid.minor = element_line(color = "#333")
       ) +
       labs(
-        title = "Share Price Performance (Indexed to 100)",
         y = "Indexed Value",
         x = "")
     ggplotly(p, tooltip = "text") %>%
@@ -222,12 +234,12 @@ function(input, output, session) {
   
 # Return Differential Chart
   output$ret_diff_plot <- renderPlotly({
-    req(returns_data(), input$focus_asset, input$benchmark_asset)
+    req(returns_data_periodic(), input$focus_asset, input$benchmark_asset)
     
     # Prepare Data
-    spread_data <- returns_data() %>% 
+    spread_data <- returns_data_periodic() %>% 
       filter(symbol %in% c(input$focus_asset, input$benchmark_asset)) %>% 
-      pivot_wider(names_from = symbol, values_from = daily_return) %>% 
+      pivot_wider(names_from = symbol, values_from = periodic_return) %>% 
       na.omit() %>% 
       mutate(
         # Calculate Spread
