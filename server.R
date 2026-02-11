@@ -118,7 +118,7 @@ function(input, output, session) {
              mar = c(0, 0, 2, 0)) # Margins
    })
   
-# Performance Comparison Plot (Stock price indexed to 100)
+# Relative Performance Comparison Plot (Stock price indexed to 100)
   output$relative_plot <- renderPlotly({
     req(all_data())
     
@@ -152,16 +152,21 @@ function(input, output, session) {
       geom_line(alpha = 0.8, size = 0.6) +
       theme_minimal() +
       theme(
-        text = element_text(color = "white"),
+        text = element_text(color = "white", size = 12),
         axis.text = element_text(color = "white"),
         panel.grid.major = element_line(color = "#444"),
         panel.grid.minor = element_line(color = "#333")
       ) +
       labs(
         y = "Indexed Value",
-        x = "")
+        x = "",
+        color = NULL)
     ggplotly(p, tooltip = "text") %>%
-      layout(paper_bgcolor = "rgba(0,0,0,0)", plot_bgcolor = "rgba(0,0,0,0)", margin = list(b = 20))
+      layout(paper_bgcolor = "rgba(0,0,0,0)", plot_bgcolor = "rgba(0,0,0,0)", 
+             # Margins so all charts line up
+             legend = list(orientation = "h", x = 0, y = 1.1, font = list(color = "white"), title = list(text = "")),
+             margin = list(l = 70, r = 20, t = 10, b = 0)
+      )
   })
   
 # Volatility Plot
@@ -189,7 +194,10 @@ function(input, output, session) {
     
     ggplotly(p) %>% 
       layout(showlegend = FALSE, 
-             paper_bgcolor = 'rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+             paper_bgcolor = 'rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+             # Margins so all charts line up
+             margin = list(l = 70, r = 20, t = 30, b = 0)
+      )
   })
   
 # Rolling Correlations Chart
@@ -213,8 +221,7 @@ function(input, output, session) {
           get(input$benchmark_asset), 
           n = input$roll_window
         ) 
-      ) %>% 
-      na.omit()
+      )
     
     avg_corr <- mean(res$rolling_corr, na.rm = TRUE)
     
@@ -235,7 +242,9 @@ function(input, output, session) {
         x = "")
     
     ggplotly(p) %>% 
-      layout(paper_bgcolor = 'rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin = list(b = 20))
+      layout(paper_bgcolor = 'rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+             margin = list(l = 70, r = 20, t = 30, b = 0)
+      )
   })
   
 # Return Differential Chart
@@ -265,7 +274,10 @@ function(input, output, session) {
         x = "",
         y = "Spread (%)")
     ggplotly(p) %>% 
-      layout(paper_bgcolor = 'rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+      layout(paper_bgcolor = 'rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+             # Margins so all charts line up
+             margin = list(l = 70, r = 20, t = 30, b = 0)
+      )
   })
  
 
