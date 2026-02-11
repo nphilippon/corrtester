@@ -139,12 +139,9 @@ function(input, output, session) {
       labs(
         title = "Share Price Performance (Indexed to 100)",
         y = "Indexed Value",
-        x = "",
-        color = "Ticker" #Universe?
-      )
-    
+        x = "")
     ggplotly(p, tooltip = "text") %>%
-      layout(paper_bgcolor = "rgba(0,0,0,0)", plot_bgcolor = "rgba(0,0,0,0)")
+      layout(paper_bgcolor = "rgba(0,0,0,0)", plot_bgcolor = "rgba(0,0,0,0)", margin = list(b = 20))
   })
   
 # Volatility Plot
@@ -167,7 +164,6 @@ function(input, output, session) {
         panel.grid.major = element_line(color = "#444"),
         legend.position = "none") +
       labs(
-        title = "Annualized Volatility", 
         x = "", 
         y = "Annualized Standard Deviation")
     
@@ -196,30 +192,62 @@ function(input, output, session) {
           get(input$focus_asset), 
           get(input$benchmark_asset), 
           n = input$roll_window
-        )
+        ) 
       ) %>% 
       na.omit()
+    
+    avg_corr <- mean(res$rolling_corr, na.rm = TRUE)
     
     # Generate Rolling Corr Chart
     p <- ggplot(res, aes(x = date, y = rolling_corr)) +
       geom_line(color = "#e67e22", size = 1) +
       geom_hline(yintercept = 0, linetype = "dashed", color = "white", alpha = 0.5) +
-      geom_hline(yintercept = 0.5, linetype = "dotted", color = "#77AADD", alpha = 0.5) +
+      geom_hline(yintercept = avg_corr, linetype = "dotted", color = "#EBF38B", alpha = 0.8) +
       theme_minimal() +
       theme(
         text = element_text(color = "white"),
         axis.text = element_text(color = "white"),
         panel.grid.major = element_line(color = "#444")) +
       labs(
-        title = paste(clean_ticker_names(input$focus_asset), "vs", clean_ticker_names(input$benchmark_asset)),
+        title = paste(clean_ticker_names(input$focus_asset), "vs", clean_ticker_names(input$benchmark_asset), "Rolling Correlation Trend"),
         subtitle = paste(input$roll_window, "Day Rolling Correlation"),
         y = "Correlation",
-        x = "") +
-      scale_y_continuous(limits = c(-1,1))
+        x = "")
     
+    ggplotly(p) %>% 
+      layout(paper_bgcolor = 'rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin = list(b = 20))
+  })
+  
+# Return Differential Chart
+  output$ret_diff_plot <- renderPlotly({
+    req(returns_data(), input$focus_asset, input$benchmark_asset)
+    
+    # Prepare Data
+    spread_data <- returns_data() %>% 
+      filter(symbol %in% c(input$focus_asset, input$benchmark_asset)) %>% 
+      pivot_wider(names_from = symbol, values_from = daily_return) %>% 
+      na.omit() %>% 
+      mutate(
+        # Calculate Spread
+        spread = get(input$focus_asset) - get(input$benchmark_asset))
+    
+    # Generate Chart
+    p <- ggplot(spread_data, aes(x = date, y = spread)) +
+      geom_area(fill = "#EBF38B", alpha = 0.3) +
+      geom_line(color = "#EBF38B", size = 0.5) +
+      geom_hline(yintercept = 0, color= "white", alpha = 0.5) +
+      theme_minimal() +
+      theme(
+        text = element_text(color = "white"), 
+        axis.text = element_text(color = "white"), 
+        panel.grid.major = element_line(color = "#444")) +
+      labs(
+        x = "",
+        y = "Spread (%)")
     ggplotly(p) %>% 
       layout(paper_bgcolor = 'rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
   })
+ 
 
 # Portfolio Backtesting (Using Tidyquant Portfolio)
   

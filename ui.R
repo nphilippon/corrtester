@@ -41,6 +41,12 @@ fluidPage(
       background-color: #3e444c !important;
       color: #9ca3af !important;
     }
+    /* Formatting for stacked charts */
+    .chart-label { 
+    color: #EBF38B; font-weight: bold; 
+    margin-bottom: 5px; margin-top: 
+    15px; text-transform: uppercase; 
+    font-size: 1.5rem; letter-spacing: 1px; }
   "))),
   
   
@@ -88,15 +94,29 @@ fluidPage(
           end = Sys.Date()
         ),
         
-        hr(),
+        hr(style = "border-color: #444;"),
         
+        # Rolling Correlation Controls
+        h4("Correlation Signal Analysis Tools", style = "color: #EBF38B;"),
+        selectInput("focus_asset", "Target Asset:", choices = NULL),
+        selectInput("benchmark_asset", "Benchmark:", choices = NULL),
+        numericInput("roll_window", "Rolling Correlation Window (days):", value = 90, min = 10),
+        
+        hr(style = "border-color: #444;"),
         checkboxInput("show_actual_price", "Show actual price in tooltip", TRUE)
       )
     ),
+    
     # Relative Price Chart
-    column(
-      width = 9,
-      plotlyOutput("relative_plot", height = "450px")
+    column(width = 9,
+           div(class = "chart-label", "Relative Performance (Indexed to 100)"),
+           plotlyOutput("relative_plot", height = "350px"),
+           
+           div(class = "chart-label", "Rolling Correlation Trend"),
+           plotlyOutput("rolling_corr_plot", height = "250px"),
+           
+           div(class = "chart-label", "Return Differential"),
+           plotlyOutput("ret_diff_plot", height = "250px"),
     )
   ),
   
@@ -107,48 +127,17 @@ fluidPage(
     column(width = 12,
            tabsetPanel(
              # Correlation Tab
-             tabPanel("Correlation",
-                      div(
-                        style = "background:#272b30; padding:20px; border:1px solid #444; border-top:none; border-radius:0 0 14px 14px;",
-                        fluidRow(
-                          column(width = 4,
-                                 # Correlation Matrix (left side)
-                                 h4("Correlation Heatmap", style = "color: #EBF38B ;"),
-                                 # Output Chart
-                                 plotOutput("corr_plot", height = "550px"),
-                                 br()
-                                 ),
-                          column(width = 8,
-                                 # Rolling Correlation (right side)
-                                 h4("Rolling Correlation", style = "color: #EBF38B;"),
-                                 div(class = "control-panel",
-                                     # Make inputs for focus asset, benchmark asset, and rolling corr window
-                                     fluidRow(
-                                       column(width = 4,
-                                              selectInput("focus_asset", "Focus Asset:", choices = NULL)),
-                                       column(width = 4,
-                                              selectInput("benchmark_asset", "Benchmark Asset:", choices = NULL)),
-                                       column(width = 4,
-                                              numericInput("roll_window", "Rolling Correlation Window (days):",
-                                                           value = 90,
-                                                           min = 10,
-                                                           max = 252)) # 252 = approx. trading days in a year
-                                       )
-                                     ),
-                                 # Output Chart
-                                 plotlyOutput("rolling_corr_plot", height = "500px")
-                                 )
-                          )
-                        )
-                      ),
-             # Risk & Volatility Tab
-             tabPanel("Risk & Volatility",
-                      div(style = "background: #272b30; padding: 20px; border: 1px solid #444; border-top: none;",
-                          # Output Chart
-                          plotlyOutput("vol_plot", height = "500px")
-                          )
-                      ),
-             # Portfolio Backtesting Tab
+             tabPanel("Correlations & Volatility",
+                      div(style = "background:#272b30; padding:20px; border:1px solid #444; border-top:none;",
+                          fluidRow(
+                            column(width = 6, 
+                                   h4("Correlation Heatmap", style = "color: #EBF38B;"),
+                                   plotOutput("corr_plot", height = "500px")),
+                            column(width = 6,
+                                   h4("Annnualized Volatility", style = "color: #EBF38B;"),
+                                   plotlyOutput("vol_plot", height = "500px")),
+                          ))
+             ),
              tabPanel("Portfolio Backtesting",
                       div(style = "background: #272b30; padding: 20px; border: 1px solid #444; border-top: none;",
                           fluidRow(
