@@ -26,6 +26,6 @@ jobs:
         file: ./Dockerfile
         push: true
         tags: |
-          cai/corrtester:latest
-          cai/corrtester:${{ github.run_number }}    
+          cainaidoo/corrtester:latest
+          cainaidoo/corrtester:${{ github.run_number }}    
 
