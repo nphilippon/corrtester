@@ -25,4 +25,7 @@ jobs:
         context: .
         file: ./Dockerfile
         push: true
-        tags: cainaidoo/corrtester:latest
+        tags: |
+          cai/corrtester:latest
+          cai/corrtester:${{ github.run_number }}    
+
