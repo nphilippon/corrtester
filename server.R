@@ -31,7 +31,7 @@ function(input, output, session) {
   })
   
   # Get reactive data
-  all_data <- eventReactive({
+  all_data <- reactive({
     tickers_to_get <- combined_tickers()
     req(tickers_to_get, input$dates)
     
