@@ -217,7 +217,7 @@ fluidPage(
         ),
         
         tabPanel(
-          "Stats Summary",
+          "Summary Stats",
           div(
             style = "background:#272b30; padding:20px; border:1px solid #444; border-top:none;",
             
