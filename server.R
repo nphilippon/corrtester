@@ -1,12 +1,12 @@
 library(shiny)
-
+library(moments)
 function(input, output, session) {
   
   # Combine all asset type tickers
   combined_tickers <- reactive({
     unique(c(input$equities, input$commodities, input$indexes))
   })
-
+  
   # Update Focus & Benchmark asset dropdowns (in rolling correlation tab)
   observe({
     tickers <- combined_tickers()
@@ -63,21 +63,49 @@ function(input, output, session) {
         col_rename = "daily_return"
       )
   })
-    
-    # Calculate Periodic Returns (weekly/monthly)
-    returns_data_periodic <- reactive({
-      all_data() %>%
-        group_by(symbol) %>%
-        filter(!is.na(adjusted)) %>% 
-        tq_transmute(
-          select = adjusted,
-          mutate_fun = periodReturn,
-          period = input$return_freq,
-          col_rename = "periodic_return"
-        )
-  })
   
-# Correlation Matrix
+  # Calculate Periodic Returns (weekly/monthly)
+  returns_data_periodic <- reactive({
+    all_data() %>%
+      group_by(symbol) %>%
+      filter(!is.na(adjusted)) %>%
+      tq_transmute(
+        select = adjusted,
+        mutate_fun = periodReturn,
+        period = input$return_freq,
+        col_rename = "periodic_return"
+      )
+  })
+    
+  # ---- Stats Summary table ----
+  output$stats_table <- renderTable({
+    req(returns_data())
+    
+    returns_data() %>%
+      group_by(symbol) %>%
+      summarise(
+        n_obs = sum(is.finite(daily_return)),
+        mean  = mean(daily_return, na.rm = TRUE),
+        sd    = sd(daily_return, na.rm = TRUE),
+        skew  = moments::skewness(daily_return, na.rm = TRUE),
+        kurt  = moments::kurtosis(daily_return, na.rm = TRUE),  # normal ~ 3
+        min   = min(daily_return, na.rm = TRUE),
+        max   = max(daily_return, na.rm = TRUE),
+        .groups = "drop"
+      ) %>%
+      mutate(
+        symbol = clean_ticker_names(symbol),
+        mean = round(mean, 6),
+        sd   = round(sd, 6),
+        skew = round(skew, 3),
+        kurt = round(kurt, 3),
+        min  = round(min, 6),
+        max  = round(max, 6)
+      ) %>%
+      arrange(symbol)
+  }, striped = TRUE, bordered = TRUE, hover = TRUE, spacing = "s")
+  
+  # Correlation Matrix
   output$corr_plot <- renderPlot({
     req(returns_data())
     
@@ -116,9 +144,9 @@ function(input, output, session) {
              order = "hclust",  # Groups Similar
              col = col(200),    # Gradient
              mar = c(0, 0, 2, 0)) # Margins
-   })
+  })
   
-# Relative Performance Comparison Plot (Stock price indexed to 100)
+  # Relative Performance Comparison Plot (Stock price indexed to 100)
   output$relative_plot <- renderPlotly({
     req(all_data())
     
@@ -169,7 +197,7 @@ function(input, output, session) {
       )
   })
   
-# Volatility Plot
+  # Volatility Plot
   output$vol_plot <- renderPlotly({
     req(returns_data())
     
@@ -200,7 +228,7 @@ function(input, output, session) {
       )
   })
   
-# Rolling Correlations Chart
+  # Rolling Correlations Chart
   output$rolling_corr_plot <- renderPlotly({
     req(returns_data(), input$focus_asset, input$benchmark_asset)
     
@@ -248,7 +276,7 @@ function(input, output, session) {
       )
   })
   
-# Return Differential Chart
+  # Return Differential Chart
   output$ret_diff_plot <- renderPlotly({
     req(returns_data_periodic(), input$focus_asset, input$benchmark_asset)
     
@@ -280,9 +308,9 @@ function(input, output, session) {
              margin = list(l = 70, r = 20, t = 30, b = 0)
       )
   })
- 
-
-# Portfolio Backtesting (Using Tidyquant Portfolio)
+  
+  
+  # Portfolio Backtesting (Using Tidyquant Portfolio)
   
   # Portfolio Weights Input
   output$weight_inputs <- renderUI({
@@ -303,10 +331,10 @@ function(input, output, session) {
         # If equity is the last selected and we have at least 2, lock input (to use as auto balancing plug)
         if(i == n && n > 1) {
           numericInput(paste0("weight_", ticker),
-                     label = paste(label_text, "- Auto-Balanced"),
-                     value = default_weight, 
-                     min = 0, 
-                     max = 100) %>% 
+                       label = paste(label_text, "- Auto-Balanced"),
+                       value = default_weight, 
+                       min = 0, 
+                       max = 100) %>% 
             # Add new CSS class to disable interaction
             shiny::tagAppendAttributes(class = "locked-input")
         }
@@ -352,7 +380,7 @@ function(input, output, session) {
     # Update/Overwrite last input box value
     updateNumericInput(session, paste0("weight_", last_ticker), value = remaining_weight)
   })
-
+  
   # Calculate Portfolio Performance
   backtest_results <- eventReactive(input$run_backtest, {
     req(returns_data())
@@ -421,7 +449,7 @@ function(input, output, session) {
              is_benchmark = TRUE) %>% 
       ungroup() %>% 
       select(date, cum_return, type, category, is_benchmark)
-      
+    
     # Combine
     res <- bind_rows(portfolio_returns, comm_bm_returns, index_bm_returns)
     

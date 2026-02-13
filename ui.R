@@ -73,62 +73,62 @@ fluidPage(
   # Global Asset and Date Inputs
   fluidRow(
     column(width = 3,
-      wellPanel(
-        h4("Asset Selection", style = "color: #EBF38B; margin-top:0;"),
-        
-        # Equity Selection Dropdown
-        selectizeInput("equities", "Select Equities:",
-                       choices = equity_list,
-                       selected = c("CVE.TO", "SU.TO"),
-                       multiple = TRUE,
-                       options = list(
-                         hideSelected = FALSE,
-                         plugins = list(
-                           "remove_button"))),
-        
-        # Commodity Selection Dropdown
-        selectizeInput("commodities", "Select Commodities:",
-                       choices = commodity_list,
-                       selected = "CL=F",
-                       multiple = TRUE,
-                       options = list(
-                         hideSelected = FALSE,
-                         plugins = list(
-                           "remove_button"))),
-        
-        # Index Selection Dropdown
-        selectizeInput("indexes", "Select Indexes",
-                       choices = index_list,
-                       selected = "XEG.TO",
-                       multiple = TRUE,
-                       options = list(
-                         hideSelected = FALSE,
-                         plugins = list(
-                           "remove_button"))),
-        
-        # Date Selection
-        dateRangeInput("dates", "Time Period:",
-          start = "2023-01-01",
-          end = Sys.Date()
-        ),
-        
-        hr(style = "border-color: #444;"),
-        
-        # Rolling Correlation Controls
-        h4("Rolling Correlation Analysis", style = "color: #EBF38B;"),
-        selectInput("focus_asset", "Target Asset:", choices = NULL),
-        selectInput("benchmark_asset", "Benchmark:", choices = NULL),
-        numericInput("roll_window", "Rolling Correlation Window (days):", value = 90, min = 5),
-        hr(style = "border-color: #444;"),
-        
-        # Return Differential Controls
-        h4("Return Differential Analysis", style = "color: #EBF38B;"),
-        selectInput("return_freq", "Return Frequency:",
-                    choices = c("Daily" = "daily", "Weekly" = "weekly", "Monthly" = "monthly"),
-                    selected = "weekly"),
-        
-        hr(style = "border-color: #444;")
-      )
+           wellPanel(
+             h4("Asset Selection", style = "color: #EBF38B; margin-top:0;"),
+             
+             # Equity Selection Dropdown
+             selectizeInput("equities", "Select Equities:",
+                            choices = equity_list,
+                            selected = c("CVE.TO", "SU.TO"),
+                            multiple = TRUE,
+                            options = list(
+                              hideSelected = FALSE,
+                              plugins = list(
+                                "remove_button"))),
+             
+             # Commodity Selection Dropdown
+             selectizeInput("commodities", "Select Commodities:",
+                            choices = commodity_list,
+                            selected = "CL=F",
+                            multiple = TRUE,
+                            options = list(
+                              hideSelected = FALSE,
+                              plugins = list(
+                                "remove_button"))),
+             
+             # Index Selection Dropdown
+             selectizeInput("indexes", "Select Indexes",
+                            choices = index_list,
+                            selected = "XEG.TO",
+                            multiple = TRUE,
+                            options = list(
+                              hideSelected = FALSE,
+                              plugins = list(
+                                "remove_button"))),
+             
+             # Date Selection
+             dateRangeInput("dates", "Time Period:",
+                            start = "2023-01-01",
+                            end = Sys.Date()
+             ),
+             
+             hr(style = "border-color: #444;"),
+             
+             # Rolling Correlation Controls
+             h4("Rolling Correlation Analysis", style = "color: #EBF38B;"),
+             selectInput("focus_asset", "Target Asset:", choices = NULL),
+             selectInput("benchmark_asset", "Benchmark:", choices = NULL),
+             numericInput("roll_window", "Rolling Correlation Window (days):", value = 90, min = 5),
+             hr(style = "border-color: #444;"),
+             
+             # Return Differential Controls
+             h4("Return Differential Analysis", style = "color: #EBF38B;"),
+             selectInput("return_freq", "Return Frequency:",
+                         choices = c("Daily" = "daily", "Weekly" = "weekly", "Monthly" = "monthly"),
+                         selected = "weekly"),
+             
+             hr(style = "border-color: #444;")
+           )
     ),
     
     # Relative Price Chart
@@ -154,18 +154,18 @@ fluidPage(
              tabPanel("Correlations & Volatility",
                       div(style = "background:#272b30; padding:20px; border:1px solid #444; border-top:none;",
                           fluidRow(
-                            column(width = 6, 
+                            column(width = 6,
                                    h4("Correlation Heatmap", style = "color: #EBF38B;"),
                                    plotOutput("corr_plot", height = "500px")),
                             column(width = 6,
                                    h4("Annnualized Volatility", style = "color: #EBF38B;"),
-                                   plotlyOutput("vol_plot", height = "500px")),
+                                   plotlyOutput("vol_plot", height = "500px"))
                           ))
              ),
+             
              tabPanel("Portfolio Backtesting",
                       div(style = "background: #272b30; padding: 20px; border: 1px solid #444; border-top: none;",
                           fluidRow(
-                            # Portfolio Setup Options
                             column(width = 4,
                                    wellPanel(
                                      style = "background:#2e3338; border:1px solid #444;",
@@ -176,15 +176,20 @@ fluidPage(
                                      actionButton("run_backtest", "Run Backtest", class = "btn-warning btn-block")
                                    )
                             ),
-                            # Show Portfolio Chart
                             column(width = 8,
                                    h4("Cumulative Returns vs Benchmarks", style = "color: #EBF38B;"),
                                    plotlyOutput("backtest_plot", height = "500px")
                             )
                           )
                       )
+             ),
+             tabPanel("Stats Summary",
+                      div(style = "background:#272b30; padding:20px; border:1px solid #444; border-top:none;",
+                          h4("Daily Return Summary Statistics", style = "color: #EBF38B;"),
+                          tableOutput("stats_table")
+                      ))
              )
            )
-    )
-  )
-)
+                      )
+             )
+        
