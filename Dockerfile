@@ -3,16 +3,17 @@ FROM --platform=linux/amd64 rocker/shiny-verse:latest
 
 
 #HAVE PACMAN INSTLALL DEPENDENCIES ON SYSTEM
-RUN apt-get update && apt-get install -y \ 
+RUN apt-get update && apt-get install -y \
   libssl-dev \
   libcurl4-gnutls-dev \
-  libxml2-dev 
+  libxml2-dev \
+  curl \
   
-#COPY SHINY FILES INTO DOCKER CONTAINMENT
+#COPY REQUIREMENTS FIRST PUTTING INTO LINUX TEMP FOLDER TO TRY TO CACHE THEM TO SAVE TIME
+COPY requirements.R /tmp/requirements.R
+RUN Rscript /tmp/requirements.R
 COPY . /srv/shiny-app
 
-#install REQUIRED PACKAGES
-RUN Rscript /srv/shiny-app/requirements.R
 
 #create user (dont give everyone root access)
 RUN useradd -m shinylover
