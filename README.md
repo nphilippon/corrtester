@@ -5,7 +5,7 @@
 Corrtester is a Shiny app built to be used as a tool for analyzing
 correlations between equities, commodities, and indexes in the energy
 sector. The app uses a multi file structure, and is containerized with
-docker .
+Docker .
 
 CorrTester allows the user to select assets and view correlation relationships
 and trends. Supported assets include Canadian and US Energy companies,
@@ -34,7 +34,7 @@ available for pulling via DockerHub.
 ### Building Image Locally
 
 In the case that you are interested on developing this app further
-consult the following bellow on instructions with local building.
+see the instructions below to build locally.
 
 Building Locally
 
@@ -50,9 +50,9 @@ docker run -p 3838:3838 corrtester
 
 Then Navigate to the following website: <http://localhost:3838>
 
-## Automated Github Deployment Pipeline to DockerHub
+## Automated GitHub Deployment Pipeline to DockerHub
 
-Github actions workflow is setup so when someone pushes to the GitHub it
+GitHub actions workflow is setup so when someone pushes to the GitHub it
 automatically builds and pushes the image to DockerHub.
 
 This pipeline includes the following:
@@ -62,8 +62,8 @@ This pipeline includes the following:
 -   Authenticates DockerHub via Secrets including login username and
     secret credential
 -   Has cache set up so it doesn't waste time building the entire app
-    every time its loaded
--   Pushes image automatically to Docker if it builds succesfully
+    every time it's loaded
+-   Pushes image automatically to Docker if it builds successfully
 
 ### Running the published image via Dockerhub
 
