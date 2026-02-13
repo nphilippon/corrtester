@@ -4,9 +4,9 @@ editor_options:
     wrap: 72
 ---
 
-#CorrTester - Shiny Correlation Analysis App
+# CorrTester - Shiny Correlation Analysis App
 
-##Application Overview
+## Application Overview
 
 Corrtester is a Shiny app built to be used as a tool for analyzing
 correlations between equities, commodities, and indexes in the energy
@@ -121,7 +121,7 @@ In order to run the most recent version of the image do the following:
   ```
 
 Then go to the following website:
-http://localhost:3838
+- http://localhost:3838
 
 ### Running a specific version of the code
 Alternatively if you wanted to visit a former version of it you need to use the number tag, follow the steps below:
@@ -137,4 +137,4 @@ docker pull cainaidoo/corrtester:4
 docker run -p 3838:3838 cainaidoo/corrtester:4
 ```
 
-##Depolment Workflow Overview
+## Depolment Workflow Overview
