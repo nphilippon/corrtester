@@ -63,6 +63,25 @@ fluidPage(
       margin: 5px 0 0 0; 
       color: #94a3b8; 
       font-size: 1.1rem; }
+      /* Stats Summary notes box */
+.stats-notes {
+  color: #ffffff;
+  background: rgba(0,0,0,0.15);
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+.stats-notes h4 {
+  margin: 0 0 6px 0;
+  color: #EBF38B;
+}
+.stats-notes p, .stats-notes li {
+  font-size: 13px;
+  line-height: 1.35;
+}
+      
+      
   "))),
   
   
@@ -187,9 +206,48 @@ fluidPage(
              ),
              tabPanel("Stats Summary",
                       div(style = "background:#272b30; padding:20px; border:1px solid #444; border-top:none;",
+                          
+                          # Title
                           h4("Daily Return Summary Statistics", style = "color: #EBF38B;"),
+                          
+                          #  Beta benchmark
+                          fluidRow(
+                            column(
+                              width = 4,
+                              selectInput(
+                                "beta_benchmark",
+                                "Beta benchmark (market proxy):",
+                                choices = c("SPY" = "SPY", "XEG.TO" = "XEG.TO", "CL=F" = "CL=F"),
+                                selected = "SPY"
+                              )
+                            ),
+                            column(
+                              width = 8,
+                              tags$div(
+                                class = "stats-notes",
+                                tags$p(style="margin:0;",
+                                       textOutput("beta_note")
+                                )
+                              )
+                            )
+                          ),
+                          
+                          # Explanation card
+                          tags$div(
+                            class = "stats-notes",
+                            tags$p("Metrics computed from daily returns over the selected date range."),
+                            tags$ul(
+                              tags$li(tags$b("Mean / SD:"), " Average daily return and daily volatility."),
+                              tags$li(tags$b("Ann Return / Ann Vol:"), " Annualized using 252 trading days; volatility uses √252."),
+                              tags$li(tags$b("Beta:"), " slope from regressing asset returns on the selected benchmark; measures systematic exposure."),
+                              tags$li(tags$b("Sharpe:"), " Annualized Sharpe ratio using Rf = 0"),
+                              tags$li(tags$b("Skew / Kurt:"), " Distribution shape (kurtosis > 3 implies fat tails).")
+                            )
+                          ),
+                          
                           tableOutput("stats_table")
-                      ))
+                      )
+             )
            )
     )
   )

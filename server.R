@@ -4,7 +4,7 @@ function(input, output, session) {
   
   # Combine all asset type tickers
   combined_tickers <- reactive({
-    unique(c(input$equities, input$commodities, input$indexes))
+    unique(c(input$equities, input$commodities, input$indexes, input$beta_benchmark))
   })
   
   # Update Focus & Benchmark asset dropdowns (in rolling correlation tab)
@@ -78,31 +78,75 @@ function(input, output, session) {
   })
   
   # ---- Stats Summary table ----
+  
   output$stats_table <- renderTable({
-    req(returns_data())
+    req(returns_data(), input$beta_benchmark)
     
-    returns_data() %>%
-      group_by(symbol) %>%
-      summarise(
-        n_obs = sum(is.finite(daily_return)),
-        mean  = mean(daily_return, na.rm = TRUE),
-        sd    = sd(daily_return, na.rm = TRUE),
-        skew  = moments::skewness(daily_return, na.rm = TRUE),
-        kurt  = moments::kurtosis(daily_return, na.rm = TRUE),  # normal ~ 3
-        min   = min(daily_return, na.rm = TRUE),
-        max   = max(daily_return, na.rm = TRUE),
-        .groups = "drop"
+    wide <- returns_data() %>%
+      dplyr::select(date, symbol, daily_return) %>%
+      tidyr::pivot_wider(names_from = symbol, values_from = daily_return)
+    
+    bm <- input$beta_benchmark
+    
+    validate(
+      need(bm %in% colnames(wide),
+           paste0("Benchmark '", bm, "' is NOT in returns_data(). ",
+                  "Fix: add it to combined_tickers() so get_data() fetches it. ",
+                  "Currently available: ", paste(colnames(wide), collapse = ", ")))
+    )
+    
+    bm_vec <- wide[[bm]]
+    
+    wide %>%
+      dplyr::select(-date) %>%
+      dplyr::summarise(dplyr::across(
+        dplyr::everything(),
+        list(
+          n_obs = ~sum(is.finite(.x)),
+          mean  = ~mean(.x, na.rm = TRUE),
+          sd    = ~sd(.x, na.rm = TRUE),
+          
+          ann_return = ~mean(.x, na.rm = TRUE) * 252,
+          ann_vol    = ~sd(.x, na.rm = TRUE) * sqrt(252),
+          sharpe     = ~(mean(.x, na.rm = TRUE) * 252) / (sd(.x, na.rm = TRUE) * sqrt(252)),
+          
+          skew  = ~moments::skewness(.x, na.rm = TRUE),
+          kurt  = ~moments::kurtosis(.x, na.rm = TRUE),
+          min   = ~min(.x, na.rm = TRUE),
+          max   = ~max(.x, na.rm = TRUE),
+          
+          beta  = ~{
+            ok <- is.finite(.x) & is.finite(bm_vec)
+            if (sum(ok) < 5) return(NA_real_)
+            v <- var(bm_vec[ok], na.rm = TRUE)
+            if (!is.finite(v) || v == 0) return(NA_real_)
+            cov(.x[ok], bm_vec[ok], use = "complete.obs") / v
+          }
+        ),
+        .names = "{.col}__{.fn}"
+      )) %>%
+      tidyr::pivot_longer(
+        cols = dplyr::everything(),
+        names_to = c("symbol", ".value"),
+        names_sep = "__"
       ) %>%
-      mutate(
+      dplyr::mutate(
         symbol = clean_ticker_names(symbol),
+        
         mean = round(mean, 6),
         sd   = round(sd, 6),
+        ann_return = round(ann_return, 4),
+        ann_vol    = round(ann_vol, 4),
+        sharpe     = round(sharpe, 3),
+        beta       = round(beta, 3),
+        
         skew = round(skew, 3),
         kurt = round(kurt, 3),
         min  = round(min, 6),
         max  = round(max, 6)
       ) %>%
-      arrange(symbol)
+      dplyr::arrange(symbol)
+    
   }, striped = TRUE, bordered = TRUE, hover = TRUE, spacing = "s")
   
   # Correlation Matrix
@@ -543,7 +587,7 @@ function(input, output, session) {
     
     # Combine all asset type tickers
     combined_tickers <- reactive({
-      unique(c(input$equities, input$commodities, input$indexes))
+      unique(c(input$equities, input$commodities, input$indexes, input$beta_benchmark))
     })
     
     # Update Focus & Benchmark asset dropdowns (in rolling correlation tab)
