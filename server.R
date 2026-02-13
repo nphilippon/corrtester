@@ -805,7 +805,6 @@ function(input, output, session) {
     p <- ggplot(spread_data, aes(x = date, y = spread)) +
       geom_area(fill = "#EBF38B", alpha = 0.3) +
       geom_line(color = "#EBF38B", size = 0.5) +
-      geom_hline(yintercept = 0, color= "white", alpha = 0.5) +
       theme_minimal() +
       theme(
         text = element_text(color = "white"), 
