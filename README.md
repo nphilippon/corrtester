@@ -11,12 +11,12 @@ CorrTester allows the user to select assets and view correlation relationships
 and trends. Supported assets include Canadian and US Energy companies,
 commodities futures prices, and key sector indexes. 
 
-Main Features:
+## Main Features:
 - Relative Share Price Performance
 - Rolling correlations between two assets
 - Daily, Weekly, or Monthly Return Differentials between two assets 
 
-Extra Features:
+## Extra Features:
 - Correlation Matrix between multiple assets
 - Annualized Volatility Comparison
 - Portfolio Back-testing to implement trading strategies 
