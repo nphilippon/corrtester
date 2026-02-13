@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y \
   libssl-dev \
   libcurl4-gnutls-dev \
   libxml2-dev \
-  curl \
+  curl 
   
 #COPY REQUIREMENTS FIRST PUTTING INTO LINUX TEMP FOLDER TO TRY TO CACHE THEM TO SAVE TIME
 COPY requirements.R /tmp/requirements.R
