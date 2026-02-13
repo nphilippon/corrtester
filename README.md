@@ -94,7 +94,7 @@ docker run -p 3838:3838 cainaidoo/corrtester:4
 ## Additional info about deployment
 
 The container supports the following features:
-- Multi CPU support (Runs on both AMD and ARM CPUS)
+- Multi CPU support (Does not run natively on ARM, base image could only work on AMD)
 - Image versions via tagging (`latest` and `${{github.run_number}}`)
 - Health monitoring to ensure shiny app is responsive via `HEALTHCHECK`
 - Cloud deployment ready without additional code (Via AWS, Azure, Google)
@@ -103,7 +103,6 @@ The container supports the following features:
 
 After looking at the deployment aspect of the project these are some issues and improvements we can include in future projects:
 
-- Docker image defaults to linux/amd64 which gives a warning to be careful, making these cross platform images could be optimized better
 - Docker build times can be optimized by improving the cache with more complicated structures of code recycling old code so its not being loaded always
 - Github deployment should likely be pushed to a branch prior to being pushed to main for testing purposes 
-
+- Try to see in the future if we could natively implement it on ARM CPU's for true cross play, as it is emulated currently on those cpus
