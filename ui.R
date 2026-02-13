@@ -169,89 +169,100 @@ fluidPage(
   
   # Analytics Tabs
   fluidRow(
-    column(width = 12,
-           tabsetPanel(
-             # Correlation Tab
-             tabPanel("Correlations & Volatility",
-                      div(style = "background:#272b30; padding:20px; border:1px solid #444; border-top:none;",
-                          fluidRow(
-                            column(width = 6,
-                                   h4("Correlation Heatmap", style = "color: #EBF38B;"),
-                                   plotOutput("corr_plot", height = "500px")),
-                            column(width = 6,
-                                   h4("Annnualized Volatility", style = "color: #EBF38B;"),
-                                   plotlyOutput("vol_plot", height = "500px"))
-                          ))
-             ),
-             
-             tabPanel("Portfolio Backtesting",
-                      div(style = "background: #272b30; padding: 20px; border: 1px solid #444; border-top: none;",
-                          fluidRow(
-                            column(width = 4,
-                                   wellPanel(
-                                     style = "background:#2e3338; border:1px solid #444;",
-                                     h4("Portfolio Allocation", style = "color: #EBF38B;"),
-                                     helpText("Assign weights to selected equities (total to 100%)."),
-                                     uiOutput("weight_inputs"),
-                                     hr(),
-                                     actionButton("run_backtest", "Run Backtest", class = "btn-warning btn-block")
-                                   )
-                            ),
-                            column(width = 8,
-                                   h4("Cumulative Returns vs Benchmarks", style = "color: #EBF38B;"),
-                                   plotlyOutput("backtest_plot", height = "500px")
-                            )
-                          )
-                      )
-             ),
-             tabPanel("Stats Summary",
-                      div(style = "background:#272b30; padding:20px; border:1px solid #444; border-top:none;",
-                          
-                          # Title
-                          h4("Daily Return Summary Statistics", style = "color: #EBF38B;"),
-                          
-                          #  Beta benchmark
-                          fluidRow(
-                            column(
-                              width = 4,
-                              selectInput(
-                                "beta_benchmark",
-                                "Beta benchmark (market proxy):",
-                                choices = c("SPY" = "SPY", "XEG.TO" = "XEG.TO", "CL=F" = "CL=F"),
-                                selected = "SPY"
-                              )
-                            ),
-                            column(
-                              width = 8,
-                              tags$div(
-                                class = "stats-notes",
-                                tags$p(style="margin:0;",
-                                       textOutput("beta_note")
-                                )
-                              )
-                            )
-                          ),
-                          
-                          # Explanation card
-                          tags$div(
-                            class = "stats-notes",
-                            tags$p("Metrics computed from daily returns over the selected date range."),
-                            tags$ul(
-                              tags$li(tags$b("SD (Daily):"), " Standard deviation of daily returns."),
-                              tags$li(tags$b("Ann Return:"), " Annualized mean return using 252 trading days."),
-                              tags$li(tags$b("Ann Vol:"), " Annualized volatility = SD(daily) × √252."),
-                              tags$li(tags$b("Sharpe:"), " Annualized Sharpe ratio using Rf = 0."),
-                              tags$li(tags$b("Beta:"), " Cov(asset, benchmark) / Var(benchmark) using overlapping daily returns."),
-                              tags$li(tags$b("Skew / Kurtosis:"), " Return distribution shape (kurtosis > 3 implies fat tails)."),
-                              tags$li(tags$b("Min/Max Return:"), " Worst and best daily return over the selected range."),
-                              tags$li(tags$b("Min/Max Price:"), " Min and max adjusted price over the selected range.")
-                            )
-                          ),
-                          
-                          tableOutput("stats_table")
-                      )
-             )
-           )
+    column(
+      width = 12,
+      tabsetPanel(
+        tabPanel(
+          "Correlations & Volatility",
+          div(
+            style = "background:#272b30; padding:20px; border:1px solid #444; border-top:none;",
+            fluidRow(
+              column(
+                width = 6,
+                h4("Correlation Heatmap", style = "color: #EBF38B;"),
+                plotOutput("corr_plot", height = "500px")
+              ),
+              column(
+                width = 6,
+                h4("Annnualized Volatility", style = "color: #EBF38B;"),
+                plotlyOutput("vol_plot", height = "500px")
+              )
+            )
+          )
+        ),
+        
+        tabPanel(
+          "Portfolio Backtesting",
+          div(
+            style = "background: #272b30; padding: 20px; border: 1px solid #444; border-top: none;",
+            fluidRow(
+              column(
+                width = 4,
+                wellPanel(
+                  style = "background:#2e3338; border:1px solid #444;",
+                  h4("Portfolio Allocation", style = "color: #EBF38B;"),
+                  helpText("Assign weights to selected equities (total to 100%)."),
+                  uiOutput("weight_inputs"),
+                  hr(),
+                  actionButton("run_backtest", "Run Backtest", class = "btn-warning btn-block")
+                )
+              ),
+              column(
+                width = 8,
+                h4("Cumulative Returns vs Benchmarks", style = "color: #EBF38B;"),
+                plotlyOutput("backtest_plot", height = "500px")
+              )
+            )
+          )
+        ),
+        
+        tabPanel(
+          "Stats Summary",
+          div(
+            style = "background:#272b30; padding:20px; border:1px solid #444; border-top:none;",
+            
+            h4("Daily Return Summary Statistics", style = "color: #EBF38B;"),
+            
+            fluidRow(
+              column(
+                width = 4,
+                selectInput(
+                  "beta_benchmark",
+                  "Beta benchmark (market proxy):",
+                  choices = c("SPY" = "SPY", "XEG.TO" = "XEG.TO", "CL=F" = "CL=F"),
+                  selected = "SPY"
+                )
+              ),
+              column(
+                width = 8,
+                tags$div(
+                  class = "stats-notes",
+                  tags$p(style = "margin:0;", textOutput("beta_note"))
+                )
+              )
+            ),
+            
+            tags$div(
+              class = "stats-notes",
+              tags$p("Metrics computed from daily returns over the selected date range."),
+              tags$ul(
+                tags$li(tags$b("SD (Daily):"), " Standard deviation of daily returns."),
+                tags$li(tags$b("Ann Return:"), " Annualized mean return using 252 trading days."),
+                tags$li(tags$b("Ann Vol:"), " Annualized volatility = SD(daily) × √252."),
+                tags$li(tags$b("Sharpe:"), " Annualized Sharpe ratio using Rf = 0."),
+                tags$li(tags$b("Beta:"), " Cov(asset, benchmark) / Var(benchmark) using overlapping daily returns."),
+                tags$li(tags$b("Skew / Kurtosis:"), " Return distribution shape (kurtosis > 3 implies fat tails)."),
+                tags$li(tags$b("Min/Max Price:"), " Min and max adjusted price over the selected range.")
+              )
+            ),
+            
+            div(
+              style = "overflow-x:auto;",
+              gt::gt_output("stats_table")
+            )
+          )
+        )
+      )
     )
   )
 )

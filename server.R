@@ -1,5 +1,6 @@
 library(shiny)
 library(moments)
+library(gt)
 function(input, output, session) {
   
   # Combine all asset type tickers
@@ -79,42 +80,47 @@ function(input, output, session) {
   
   # ---- Stats Summary table ----
   
+  library(gt)
+  
   output$beta_note <- renderText({
     req(input$beta_benchmark)
     paste0("Beta is computed vs: ", clean_ticker_names(input$beta_benchmark))
   })
   
-  output$stats_table <- renderTable({
+  output$stats_table <- gt::render_gt({
     req(returns_data(), all_data(), input$beta_benchmark)
     
-    bm <- input$beta_benchmark
-    
-    # ---- daily returns wide (for beta) ----
-    wide_ret <- returns_data() %>%
+    wide <- returns_data() %>%
       dplyr::select(date, symbol, daily_return) %>%
       tidyr::pivot_wider(names_from = symbol, values_from = daily_return)
     
+    bm <- input$beta_benchmark
+    
     validate(
-      need(bm %in% colnames(wide_ret),
-           paste0("Benchmark '", bm, "' is NOT in returns_data(). ",
-                  "Fix: add it to combined_tickers() so get_data() fetches it. ",
-                  "Currently available: ", paste(colnames(wide_ret), collapse = ", ")))
+      need(
+        bm %in% colnames(wide),
+        paste0(
+          "Benchmark '", bm, "' is NOT in returns_data(). ",
+          "Fix: add it to combined_tickers() so get_data() fetches it. ",
+          "Currently available: ", paste(colnames(wide), collapse = ", ")
+        )
+      )
     )
     
-    bm_vec <- wide_ret[[bm]]
+    bm_vec <- wide[[bm]]
     
-    # ---- price min/max over range (from all_data) ----
-    px_minmax <- all_data() %>%
+    # price range + current price (last available adjusted) over selected date range
+    price_rng <- all_data() %>%
       dplyr::filter(!is.na(adjusted)) %>%
       dplyr::group_by(symbol) %>%
       dplyr::summarise(
-        px_min = min(adjusted, na.rm = TRUE),
-        px_max = max(adjusted, na.rm = TRUE),
+        min_price = min(adjusted, na.rm = TRUE),
+        max_price = max(adjusted, na.rm = TRUE),
+        current_price = dplyr::last(adjusted[order(date)], order_by = date),
         .groups = "drop"
       )
     
-    # ---- summary stats (one row per asset) ----
-    stats <- wide_ret %>%
+    stats <- wide %>%
       dplyr::select(-date) %>%
       dplyr::summarise(dplyr::across(
         dplyr::everything(),
@@ -127,8 +133,6 @@ function(input, output, session) {
           
           skew  = ~moments::skewness(.x, na.rm = TRUE),
           kurt  = ~moments::kurtosis(.x, na.rm = TRUE),
-          min_r = ~min(.x, na.rm = TRUE),
-          max_r = ~max(.x, na.rm = TRUE),
           
           beta  = ~{
             ok <- is.finite(.x) & is.finite(bm_vec)
@@ -142,46 +146,59 @@ function(input, output, session) {
       )) %>%
       tidyr::pivot_longer(
         cols = dplyr::everything(),
-        names_to = c("symbol", ".value"),
+        names_to = c("symbol_raw", ".value"),
         names_sep = "__"
       ) %>%
-      dplyr::left_join(px_minmax, by = "symbol") %>%
-      dplyr::mutate(
-        symbol = clean_ticker_names(symbol),
-        
-        # keep numeric for calculations, but format for display
-        SD_disp        = ifelse(is.finite(sd), sprintf("%.4f", sd), NA_character_),
-        
-        ann_return_disp = ifelse(is.finite(ann_return), sprintf("%.2f", ann_return), NA_character_),
-        ann_vol_disp    = ifelse(is.finite(ann_vol), sprintf("%.2f", ann_vol), NA_character_),
-        sharpe_disp     = ifelse(is.finite(sharpe), sprintf("%.2f", sharpe), NA_character_),
-        beta_disp       = ifelse(is.finite(beta), sprintf("%.2f", beta), NA_character_),
-        skew_disp       = ifelse(is.finite(skew), sprintf("%.2f", skew), NA_character_),
-        kurt_disp       = ifelse(is.finite(kurt), sprintf("%.2f", kurt), NA_character_),
-        min_r_disp      = ifelse(is.finite(min_r), sprintf("%.2f", min_r), NA_character_),
-        max_r_disp      = ifelse(is.finite(max_r), sprintf("%.2f", max_r), NA_character_),
-        
-        px_min_disp     = ifelse(is.finite(px_min), sprintf("%.2f", px_min), NA_character_),
-        px_max_disp     = ifelse(is.finite(px_max), sprintf("%.2f", px_max), NA_character_)
+      dplyr::left_join(price_rng, by = c("symbol_raw" = "symbol")) %>%
+      dplyr::mutate(asset = clean_ticker_names(symbol_raw)) %>%
+      dplyr::select(
+        asset,
+        sd,
+        ann_return, ann_vol, sharpe, beta,
+        skew, kurt,
+        min_price, max_price, current_price
       ) %>%
-      dplyr::arrange(symbol) %>%
-      dplyr::transmute(
-        Asset        = symbol,
-        `SD (Daily)` = SD_disp,          # <- FIXED 4 decimals
-        `Ann Return` = ann_return_disp,
-        `Ann Vol`    = ann_vol_disp,
-        Sharpe       = sharpe_disp,
-        Beta         = beta_disp,
-        Skew         = skew_disp,
-        Kurtosis     = kurt_disp,
-        `Min Return` = min_r_disp,
-        `Max Return` = max_r_disp,
-        `Min Price`  = px_min_disp,
-        `Max Price`  = px_max_disp
-      )
+      dplyr::arrange(asset)
     
-    stats
-  }, striped = TRUE, bordered = TRUE, hover = TRUE, spacing = "s")
+    gt::gt(stats) %>%
+      gt::cols_label(
+        asset         = "Asset",
+        sd            = "SD (Daily)",
+        ann_return    = "Ann Return",
+        ann_vol       = "Ann Vol",
+        sharpe        = "Sharpe",
+        beta          = "Beta",
+        skew          = "Skew",
+        kurt          = "Kurtosis",
+        min_price     = "Min Price",
+        max_price     = "Max Price",
+        current_price = "Current Price"
+      ) %>%
+      # SD: fixed 4 decimals (not %)
+      gt::fmt_number(columns = c(sd), decimals = 4) %>%
+      # annual return/vol as % (0.14 -> 14%)
+      gt::fmt_percent(columns = c(ann_return, ann_vol), decimals = 0) %>%
+      # other metrics
+      gt::fmt_number(columns = c(sharpe, beta, skew, kurt), decimals = 2) %>%
+      gt::fmt_number(columns = c(min_price, max_price, current_price), decimals = 2) %>%
+      # styling to match slate
+      gt::tab_options(
+        table.width = gt::pct(100),
+        data_row.padding = gt::px(6),
+        heading.background.color = "#272b30",
+        table.background.color = "#272b30",
+        column_labels.background.color = "#2e3338",
+        column_labels.font.weight = "bold"
+      ) %>%
+      gt::tab_style(
+        style = gt::cell_text(color = "white"),
+        locations = gt::cells_body()
+      ) %>%
+      gt::tab_style(
+        style = gt::cell_text(color = "white"),
+        locations = gt::cells_column_labels()
+      )
+  })
   
   
   # Correlation Matrix
