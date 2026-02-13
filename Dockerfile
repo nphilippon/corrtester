@@ -1,5 +1,5 @@
-#FORCE TO LINUX CPU + RUN THE R SHINY APP 
-FROM --platform=linux/amd64 rocker/shiny-verse:latest
+#Dont assign to linux cpu just call it to shiny-verse 
+FROM rocker/shiny-verse:latest
 
 
 #HAVE PACMAN INSTLALL DEPENDENCIES ON SYSTEM
