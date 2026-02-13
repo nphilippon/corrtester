@@ -11,12 +11,12 @@ CorrTester allows the user to select assets and view correlation relationships
 and trends. Supported assets include Canadian and US Energy companies,
 commodities futures prices, and key sector indexes. 
 
-## Main Features:
+## Main Features
 - Relative Share Price Performance
 - Rolling correlations between two assets
 - Daily, Weekly, or Monthly Return Differentials between two assets 
 
-## Extra Features:
+## Extra Features
 - Correlation Matrix between multiple assets
 - Annualized Volatility Comparison
 - Portfolio Back-testing to implement trading strategies 
@@ -99,4 +99,11 @@ The container supports the following features:
 - Health monitoring to ensure shiny app is responsive via `HEALTHCHECK`
 - Cloud deployment ready without additional code (Via AWS, Azure, Google)
 
+## Future Improvements + Known issues in deployment
+
+After looking at the deployment aspect of the project these are some issues and improvements we can include in future projects:
+
+- Docker image defaults to linux/amd64 which gives a warning to be careful, making these cross platform images could be optimized better
+- Docker build times can be optimized by improving the cache with more complicated structures of code recycling old code so its not being loaded always
+- Github deployment should likely be pushed to a branch prior to being pushed to main for testing purposes 
 
