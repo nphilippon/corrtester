@@ -25,7 +25,7 @@ jobs:
         context: .
         file: ./Dockerfile
         push: true
-        platforms: linux/amd64,linux/arm64
+        platforms: linux/amd64
         tags: |
           cainaidoo/corrtester:latest
           cainaidoo/corrtester:${{ github.run_number }}    
