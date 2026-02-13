@@ -76,7 +76,7 @@ function(input, output, session) {
         col_rename = "periodic_return"
       )
   })
-    
+  
   # ---- Stats Summary table ----
   output$stats_table <- renderTable({
     req(returns_data())
@@ -537,71 +537,71 @@ function(input, output, session) {
              )
       )
   })
-library(shiny)
-
-function(input, output, session) {
+  library(shiny)
   
-  # Combine all asset type tickers
-  combined_tickers <- reactive({
-    unique(c(input$equities, input$commodities, input$indexes))
-  })
-
-  # Update Focus & Benchmark asset dropdowns (in rolling correlation tab)
-  observe({
-    tickers <- combined_tickers()
-    req(tickers)
+  function(input, output, session) {
     
-    # Set clean ticker names
-    clean_labels <- clean_ticker_names(tickers)
-    asset_choices <- setNames(tickers, clean_labels)
+    # Combine all asset type tickers
+    combined_tickers <- reactive({
+      unique(c(input$equities, input$commodities, input$indexes))
+    })
     
-    # Set Initial Defaults
-    current_focus <- input$focus_asset
-    current_benchmark <- input$benchmark_asset
-    initial_focus <- if (is.null(current_focus) || current_focus == "") "CVE.TO"
-    else current_focus
-    initial_benchmark <- if (is.null(current_benchmark) || current_benchmark == "") "CL=F"
-    else current_benchmark
+    # Update Focus & Benchmark asset dropdowns (in rolling correlation tab)
+    observe({
+      tickers <- combined_tickers()
+      req(tickers)
+      
+      # Set clean ticker names
+      clean_labels <- clean_ticker_names(tickers)
+      asset_choices <- setNames(tickers, clean_labels)
+      
+      # Set Initial Defaults
+      current_focus <- input$focus_asset
+      current_benchmark <- input$benchmark_asset
+      initial_focus <- if (is.null(current_focus) || current_focus == "") "CVE.TO"
+      else current_focus
+      initial_benchmark <- if (is.null(current_benchmark) || current_benchmark == "") "CL=F"
+      else current_benchmark
+      
+      updateSelectInput(session, "focus_asset",
+                        choices = asset_choices, selected = initial_focus)
+      updateSelectInput(session, "benchmark_asset",
+                        choices = asset_choices, selected = initial_benchmark)
+    })
     
-    updateSelectInput(session, "focus_asset",
-                      choices = asset_choices, selected = initial_focus)
-    updateSelectInput(session, "benchmark_asset",
-                      choices = asset_choices, selected = initial_benchmark)
-  })
-  
-  # Get reactive data
-  all_data <- reactive({
-    tickers_to_get <- combined_tickers()
-    req(tickers_to_get, input$dates)
+    # Get reactive data
+    all_data <- reactive({
+      tickers_to_get <- combined_tickers()
+      req(tickers_to_get, input$dates)
+      
+      # Get data for selected tickers (every time it is updated)
+      data <- get_data(tickers_to_get, input$dates[1], input$dates[2])
+      
+      # Check for missing tickers and show warning
+      returned_tickers <- unique(data$symbol)
+      missing_tickers <- setdiff(tickers_to_get, returned_tickers)
+      
+      if (length(missing_tickers) > 0) {
+        showNotification(
+          paste("Missing Data for: ", paste(missing_tickers, collapse = ", ")),
+          type = "warning",
+          duration = 10)
+      }
+      data
+    })
     
-    # Get data for selected tickers (every time it is updated)
-    data <- get_data(tickers_to_get, input$dates[1], input$dates[2])
-    
-    # Check for missing tickers and show warning
-    returned_tickers <- unique(data$symbol)
-    missing_tickers <- setdiff(tickers_to_get, returned_tickers)
-    
-    if (length(missing_tickers) > 0) {
-      showNotification(
-        paste("Missing Data for: ", paste(missing_tickers, collapse = ", ")),
-        type = "warning",
-        duration = 10)
-    }
-    data
-  })
-  
-  # Calculate Daily Returns
-  returns_data <- reactive({
-    all_data() %>%
-      group_by(symbol) %>%
-      filter(!is.na(adjusted)) %>% 
-      tq_transmute(
-        select = adjusted,
-        mutate_fun = periodReturn,
-        period = "daily",
-        col_rename = "daily_return"
-      )
-  })
+    # Calculate Daily Returns
+    returns_data <- reactive({
+      all_data() %>%
+        group_by(symbol) %>%
+        filter(!is.na(adjusted)) %>% 
+        tq_transmute(
+          select = adjusted,
+          mutate_fun = periodReturn,
+          period = "daily",
+          col_rename = "daily_return"
+        )
+    })
     
     # Calculate Periodic Returns (weekly/monthly)
     returns_data_periodic <- reactive({
@@ -614,102 +614,102 @@ function(input, output, session) {
           period = input$return_freq,
           col_rename = "periodic_return"
         )
-  })
+    })
+    
+    # Correlation Matrix
+    output$corr_plot <- renderPlot({
+      req(returns_data())
+      
+      # Prepare data
+      corr_data <- returns_data() %>%
+        pivot_wider(names_from = symbol, values_from = daily_return) %>%
+        select(-date) %>%
+        na.omit()
+      
+      # Make sure atleast 2 assets selected
+      if (ncol(corr_data) < 2)
+        return(NULL)
+      
+      # Make correlation matrix
+      cor_matrix <- cor(corr_data)
+      
+      # Use clean names
+      colnames(cor_matrix) <- clean_ticker_names(colnames(cor_matrix))
+      rownames(cor_matrix) <- colnames(cor_matrix)
+      
+      # Correlation Colouring ramp
+      col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
+      
+      par(bg = "#272b30") # Background Colour
+      
+      corrplot(cor_matrix, 
+               method = "shade",  
+               shade.col = NA, 
+               tl.col = "white",  # Label Colour
+               tl.srt = 45,       # Label Rotation 
+               tl.cex = 1.2,      # Label Size
+               addCoef.col = "black", # Coefficient Colour
+               number.cex = 1.5,  # Coefficient Size
+               number.digits = 2, # New, decimal points
+               cl.pos = "n",      # Hide Legend
+               order = "hclust",  # Groups Similar
+               col = col(200),    # Gradient
+               mar = c(0, 0, 2, 0)) # Margins
+    })
+    
+    # Relative Performance Comparison Plot (Stock price indexed to 100)
+    output$relative_plot <- renderPlotly({
+      req(all_data())
+      
+      show_actual_price = TRUE
+      
+      # Prepare data
+      p <- all_data() %>%
+        mutate(symbol = clean_ticker_names(symbol)) %>% # Use Clean names
+        group_by(symbol) %>%
+        filter(!is.na(adjusted)) %>%
+        mutate(indexed = (adjusted / first(adjusted)) * 100) %>%
+        mutate(
+          tip = if (isTRUE(show_actual_price)) {
+            paste0(
+              # Show actual price and indexed value in tooltip
+              "date: ", date,
+              "<br>symbol: ", symbol,
+              "<br>index: ", sprintf("%.2f", indexed),
+              "<br>price: ", sprintf("%.2f", adjusted)
+            )
+          } else {
+            paste0(
+              "date: ", date,
+              "<br>symbol: ", symbol,
+              "<br>index: ", sprintf("%.2f", indexed)
+            )
+          }
+        ) %>%
+        #  Generate Chart
+        ggplot(aes(x = date, y = indexed, color = symbol, group = symbol, text = tip)) +  # <-- group fixes missing lines
+        geom_line(alpha = 0.8, size = 0.6) +
+        theme_minimal() +
+        theme(
+          text = element_text(color = "white", size = 12),
+          axis.text = element_text(color = "white"),
+          panel.grid.major = element_line(color = "#444"),
+          panel.grid.minor = element_line(color = "#333")
+        ) +
+        labs(
+          y = "Indexed Value",
+          x = "",
+          color = NULL)
+      ggplotly(p, tooltip = "text") %>%
+        layout(paper_bgcolor = "rgba(0,0,0,0)", plot_bgcolor = "rgba(0,0,0,0)", 
+               # Margins so all charts line up
+               legend = list(orientation = "h", x = 0, y = 1.1, font = list(color = "white"), title = list(text = "")),
+               margin = list(l = 70, r = 20, t = 10, b = 0)
+        )
+    })
+  }
   
-# Correlation Matrix
-  output$corr_plot <- renderPlot({
-    req(returns_data())
-    
-    # Prepare data
-    corr_data <- returns_data() %>%
-      pivot_wider(names_from = symbol, values_from = daily_return) %>%
-      select(-date) %>%
-      na.omit()
-    
-    # Make sure atleast 2 assets selected
-    if (ncol(corr_data) < 2)
-      return(NULL)
-    
-    # Make correlation matrix
-    cor_matrix <- cor(corr_data)
-    
-    # Use clean names
-    colnames(cor_matrix) <- clean_ticker_names(colnames(cor_matrix))
-    rownames(cor_matrix) <- colnames(cor_matrix)
-    
-    # Correlation Colouring ramp
-    col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
-    
-    par(bg = "#272b30") # Background Colour
-    
-    corrplot(cor_matrix, 
-             method = "shade",  
-             shade.col = NA, 
-             tl.col = "white",  # Label Colour
-             tl.srt = 45,       # Label Rotation 
-             tl.cex = 1.2,      # Label Size
-             addCoef.col = "black", # Coefficient Colour
-             number.cex = 1.5,  # Coefficient Size
-             number.digits = 2, # New, decimal points
-             cl.pos = "n",      # Hide Legend
-             order = "hclust",  # Groups Similar
-             col = col(200),    # Gradient
-             mar = c(0, 0, 2, 0)) # Margins
-   })
-  
-# Relative Performance Comparison Plot (Stock price indexed to 100)
-  output$relative_plot <- renderPlotly({
-    req(all_data())
-    
-    show_actual_price = TRUE
-    
-    # Prepare data
-    p <- all_data() %>%
-      mutate(symbol = clean_ticker_names(symbol)) %>% # Use Clean names
-      group_by(symbol) %>%
-      filter(!is.na(adjusted)) %>%
-      mutate(indexed = (adjusted / first(adjusted)) * 100) %>%
-      mutate(
-        tip = if (isTRUE(show_actual_price)) {
-          paste0(
-            # Show actual price and indexed value in tooltip
-            "date: ", date,
-            "<br>symbol: ", symbol,
-            "<br>index: ", sprintf("%.2f", indexed),
-            "<br>price: ", sprintf("%.2f", adjusted)
-          )
-        } else {
-          paste0(
-            "date: ", date,
-            "<br>symbol: ", symbol,
-            "<br>index: ", sprintf("%.2f", indexed)
-          )
-        }
-      ) %>%
-      #  Generate Chart
-      ggplot(aes(x = date, y = indexed, color = symbol, group = symbol, text = tip)) +  # <-- group fixes missing lines
-      geom_line(alpha = 0.8, size = 0.6) +
-      theme_minimal() +
-      theme(
-        text = element_text(color = "white", size = 12),
-        axis.text = element_text(color = "white"),
-        panel.grid.major = element_line(color = "#444"),
-        panel.grid.minor = element_line(color = "#333")
-      ) +
-      labs(
-        y = "Indexed Value",
-        x = "",
-        color = NULL)
-    ggplotly(p, tooltip = "text") %>%
-      layout(paper_bgcolor = "rgba(0,0,0,0)", plot_bgcolor = "rgba(0,0,0,0)", 
-             # Margins so all charts line up
-             legend = list(orientation = "h", x = 0, y = 1.1, font = list(color = "white"), title = list(text = "")),
-             margin = list(l = 70, r = 20, t = 10, b = 0)
-      )
-  })
-}
-  
-# Volatility Plot
+  # Volatility Plot
   output$vol_plot <- renderPlotly({
     req(returns_data())
     
@@ -740,7 +740,7 @@ function(input, output, session) {
       )
   })
   
-# Rolling Correlations Chart
+  # Rolling Correlations Chart
   output$rolling_corr_plot <- renderPlotly({
     req(returns_data(), input$focus_asset, input$benchmark_asset)
     
@@ -788,7 +788,7 @@ function(input, output, session) {
       )
   })
   
-# Return Differential Chart
+  # Return Differential Chart
   output$ret_diff_plot <- renderPlotly({
     req(returns_data_periodic(), input$focus_asset, input$benchmark_asset)
     
@@ -820,9 +820,9 @@ function(input, output, session) {
              margin = list(l = 70, r = 20, t = 30, b = 0)
       )
   })
- 
-
-# Portfolio Backtesting (Using Tidyquant Portfolio)
+  
+  
+  # Portfolio Backtesting (Using Tidyquant Portfolio)
   
   # Portfolio Weights Input
   output$weight_inputs <- renderUI({
@@ -843,10 +843,10 @@ function(input, output, session) {
         # If equity is the last selected and we have at least 2, lock input (to use as auto balancing plug)
         if(i == n && n > 1) {
           numericInput(paste0("weight_", ticker),
-                     label = paste(label_text, "- Auto-Balanced"),
-                     value = default_weight, 
-                     min = 0, 
-                     max = 100) %>% 
+                       label = paste(label_text, "- Auto-Balanced"),
+                       value = default_weight, 
+                       min = 0, 
+                       max = 100) %>% 
             # Add new CSS class to disable interaction
             shiny::tagAppendAttributes(class = "locked-input")
         }
@@ -892,7 +892,7 @@ function(input, output, session) {
     # Update/Overwrite last input box value
     updateNumericInput(session, paste0("weight_", last_ticker), value = remaining_weight)
   })
-
+  
   # Calculate Portfolio Performance
   backtest_results <- eventReactive(input$run_backtest, {
     req(returns_data())
@@ -961,7 +961,7 @@ function(input, output, session) {
              is_benchmark = TRUE) %>% 
       ungroup() %>% 
       select(date, cum_return, type, category, is_benchmark)
-      
+    
     # Combine
     res <- bind_rows(portfolio_returns, comm_bm_returns, index_bm_returns)
     
@@ -1050,3 +1050,4 @@ function(input, output, session) {
       )
   })
 }
+
