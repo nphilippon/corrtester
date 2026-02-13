@@ -6,23 +6,30 @@ editor_options:
 
 #CorrTester - Shiny Correlation Analysis App
 
-##Project Overview
+##Application Overview
 
-This project is shiny project using mutli file structure, (include more
-data about the app here). Alongside this this app is containerized with
+Corrtester is a Shiny app built to be used as a tool for analyzing
+correlations between equities, commodities, and indexes in the energy
+sector. The app uses a multi file structure, and is containerized with
 docker .
 
 \*\* [Fill this section in I made a basic template feel free to make it
 however you want tho!]
 
-In ths section describe: purpose of application why it the idea of the
-application was chosen key design areas screenshots of the app if you
-can get it to fit nicely (lmk if you need help) challenges alongside the
-way (i can add to this after you finish ) how users will interact with
-it
+CorrTester allows the user to select assets and view correlation relationships
+and trends. Supported assets include Canadian and US Energy companies,
+commodities futures prices, and key sector indexes. 
 
-More or less above should just focus on shiny implementationm, ui ,
-mathamteical ideas'
+Main Features
+- Relative Share Price Performance
+- Rolling correlations between two assets
+- Daily, Weekly, or Monthly Return Differentials between two assets 
+
+Extra Features
+- Correlation Matrix between multiple assets
+- Annualized Volatility Comparison
+- Portfolio Back-testing to implement trading strategies 
+
 
 ------------------------------------------------------------------------
 
