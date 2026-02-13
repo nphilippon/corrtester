@@ -154,18 +154,18 @@ fluidPage(
              tabPanel("Correlations & Volatility",
                       div(style = "background:#272b30; padding:20px; border:1px solid #444; border-top:none;",
                           fluidRow(
-                            column(width = 6,
+                            column(width = 6, 
                                    h4("Correlation Heatmap", style = "color: #EBF38B;"),
                                    plotOutput("corr_plot", height = "500px")),
                             column(width = 6,
                                    h4("Annnualized Volatility", style = "color: #EBF38B;"),
-                                   plotlyOutput("vol_plot", height = "500px"))
+                                   plotlyOutput("vol_plot", height = "500px")),
                           ))
              ),
-             
              tabPanel("Portfolio Backtesting",
                       div(style = "background: #272b30; padding: 20px; border: 1px solid #444; border-top: none;",
                           fluidRow(
+                            # Portfolio Setup Options
                             column(width = 4,
                                    wellPanel(
                                      style = "background:#2e3338; border:1px solid #444;",
@@ -176,20 +176,15 @@ fluidPage(
                                      actionButton("run_backtest", "Run Backtest", class = "btn-warning btn-block")
                                    )
                             ),
+                            # Show Portfolio Chart
                             column(width = 8,
                                    h4("Cumulative Returns vs Benchmarks", style = "color: #EBF38B;"),
                                    plotlyOutput("backtest_plot", height = "500px")
                             )
                           )
                       )
-             ),
-             tabPanel("Stats Summary",
-                      div(style = "background:#272b30; padding:20px; border:1px solid #444; border-top:none;",
-                          h4("Daily Return Summary Statistics", style = "color: #EBF38B;"),
-                          tableOutput("stats_table")
-                      ))
              )
            )
-                      )
-             )
-        
+    )
+  )
+)
