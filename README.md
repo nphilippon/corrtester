@@ -2,16 +2,12 @@
 
 ## Application Overview
 
-
 CorrTester is a Shiny app built to be used as a tool for analyzing
 correlations between equities, commodities, and indexes in the energy
 sector. The app uses a multi file structure, and is containerized with
 Docker .
 
 Corrtester is a Shiny app built to be used as a tool for analyzing correlations between equities, commodities, and indexes in the energy sector. The app uses a multi file structure, and is containerized with Docker .
-
-
-CorrTester allows the user to select assets and view correlation relationships and trends. Supported assets include Canadian and US Energy companies, commodities futures prices, and key sector indexes.
 
 ## Main Features
 
