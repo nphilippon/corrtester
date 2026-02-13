@@ -79,32 +79,47 @@ function(input, output, session) {
   
   # ---- Stats Summary table ----
   
+  output$beta_note <- renderText({
+    req(input$beta_benchmark)
+    paste0("Beta is computed vs: ", clean_ticker_names(input$beta_benchmark))
+  })
+  
   output$stats_table <- renderTable({
-    req(returns_data(), input$beta_benchmark)
-    
-    wide <- returns_data() %>%
-      dplyr::select(date, symbol, daily_return) %>%
-      tidyr::pivot_wider(names_from = symbol, values_from = daily_return)
+    req(returns_data(), all_data(), input$beta_benchmark)
     
     bm <- input$beta_benchmark
     
+    # ---- daily returns wide (for beta) ----
+    wide_ret <- returns_data() %>%
+      dplyr::select(date, symbol, daily_return) %>%
+      tidyr::pivot_wider(names_from = symbol, values_from = daily_return)
+    
     validate(
-      need(bm %in% colnames(wide),
+      need(bm %in% colnames(wide_ret),
            paste0("Benchmark '", bm, "' is NOT in returns_data(). ",
                   "Fix: add it to combined_tickers() so get_data() fetches it. ",
-                  "Currently available: ", paste(colnames(wide), collapse = ", ")))
+                  "Currently available: ", paste(colnames(wide_ret), collapse = ", ")))
     )
     
-    bm_vec <- wide[[bm]]
+    bm_vec <- wide_ret[[bm]]
     
-    wide %>%
+    # ---- price min/max over range (from all_data) ----
+    px_minmax <- all_data() %>%
+      dplyr::filter(!is.na(adjusted)) %>%
+      dplyr::group_by(symbol) %>%
+      dplyr::summarise(
+        px_min = min(adjusted, na.rm = TRUE),
+        px_max = max(adjusted, na.rm = TRUE),
+        .groups = "drop"
+      )
+    
+    # ---- summary stats (one row per asset) ----
+    stats <- wide_ret %>%
       dplyr::select(-date) %>%
       dplyr::summarise(dplyr::across(
         dplyr::everything(),
         list(
-          n_obs = ~sum(is.finite(.x)),
-          mean  = ~mean(.x, na.rm = TRUE),
-          sd    = ~sd(.x, na.rm = TRUE),
+          sd = ~sd(.x, na.rm = TRUE),
           
           ann_return = ~mean(.x, na.rm = TRUE) * 252,
           ann_vol    = ~sd(.x, na.rm = TRUE) * sqrt(252),
@@ -112,8 +127,8 @@ function(input, output, session) {
           
           skew  = ~moments::skewness(.x, na.rm = TRUE),
           kurt  = ~moments::kurtosis(.x, na.rm = TRUE),
-          min   = ~min(.x, na.rm = TRUE),
-          max   = ~max(.x, na.rm = TRUE),
+          min_r = ~min(.x, na.rm = TRUE),
+          max_r = ~max(.x, na.rm = TRUE),
           
           beta  = ~{
             ok <- is.finite(.x) & is.finite(bm_vec)
@@ -130,24 +145,44 @@ function(input, output, session) {
         names_to = c("symbol", ".value"),
         names_sep = "__"
       ) %>%
+      dplyr::left_join(px_minmax, by = "symbol") %>%
       dplyr::mutate(
         symbol = clean_ticker_names(symbol),
         
-        mean = round(mean, 6),
-        sd   = round(sd, 6),
-        ann_return = round(ann_return, 4),
-        ann_vol    = round(ann_vol, 4),
-        sharpe     = round(sharpe, 3),
-        beta       = round(beta, 3),
+        # keep numeric for calculations, but format for display
+        SD_disp        = ifelse(is.finite(sd), sprintf("%.4f", sd), NA_character_),
         
-        skew = round(skew, 3),
-        kurt = round(kurt, 3),
-        min  = round(min, 6),
-        max  = round(max, 6)
+        ann_return_disp = ifelse(is.finite(ann_return), sprintf("%.2f", ann_return), NA_character_),
+        ann_vol_disp    = ifelse(is.finite(ann_vol), sprintf("%.2f", ann_vol), NA_character_),
+        sharpe_disp     = ifelse(is.finite(sharpe), sprintf("%.2f", sharpe), NA_character_),
+        beta_disp       = ifelse(is.finite(beta), sprintf("%.2f", beta), NA_character_),
+        skew_disp       = ifelse(is.finite(skew), sprintf("%.2f", skew), NA_character_),
+        kurt_disp       = ifelse(is.finite(kurt), sprintf("%.2f", kurt), NA_character_),
+        min_r_disp      = ifelse(is.finite(min_r), sprintf("%.2f", min_r), NA_character_),
+        max_r_disp      = ifelse(is.finite(max_r), sprintf("%.2f", max_r), NA_character_),
+        
+        px_min_disp     = ifelse(is.finite(px_min), sprintf("%.2f", px_min), NA_character_),
+        px_max_disp     = ifelse(is.finite(px_max), sprintf("%.2f", px_max), NA_character_)
       ) %>%
-      dplyr::arrange(symbol)
+      dplyr::arrange(symbol) %>%
+      dplyr::transmute(
+        Asset        = symbol,
+        `SD (Daily)` = SD_disp,          # <- FIXED 4 decimals
+        `Ann Return` = ann_return_disp,
+        `Ann Vol`    = ann_vol_disp,
+        Sharpe       = sharpe_disp,
+        Beta         = beta_disp,
+        Skew         = skew_disp,
+        Kurtosis     = kurt_disp,
+        `Min Return` = min_r_disp,
+        `Max Return` = max_r_disp,
+        `Min Price`  = px_min_disp,
+        `Max Price`  = px_max_disp
+      )
     
+    stats
   }, striped = TRUE, bordered = TRUE, hover = TRUE, spacing = "s")
+  
   
   # Correlation Matrix
   output$corr_plot <- renderPlot({

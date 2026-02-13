@@ -237,11 +237,14 @@ fluidPage(
                             class = "stats-notes",
                             tags$p("Metrics computed from daily returns over the selected date range."),
                             tags$ul(
-                              tags$li(tags$b("Mean / SD:"), " Average daily return and daily volatility."),
-                              tags$li(tags$b("Ann Return / Ann Vol:"), " Annualized using 252 trading days; volatility uses √252."),
-                              tags$li(tags$b("Beta:"), " slope from regressing asset returns on the selected benchmark; measures systematic exposure."),
-                              tags$li(tags$b("Sharpe:"), " Annualized Sharpe ratio using Rf = 0"),
-                              tags$li(tags$b("Skew / Kurt:"), " Distribution shape (kurtosis > 3 implies fat tails).")
+                              tags$li(tags$b("SD (Daily):"), " Standard deviation of daily returns."),
+                              tags$li(tags$b("Ann Return:"), " Annualized mean return using 252 trading days."),
+                              tags$li(tags$b("Ann Vol:"), " Annualized volatility = SD(daily) × √252."),
+                              tags$li(tags$b("Sharpe:"), " Annualized Sharpe ratio using Rf = 0."),
+                              tags$li(tags$b("Beta:"), " Cov(asset, benchmark) / Var(benchmark) using overlapping daily returns."),
+                              tags$li(tags$b("Skew / Kurtosis:"), " Return distribution shape (kurtosis > 3 implies fat tails)."),
+                              tags$li(tags$b("Min/Max Return:"), " Worst and best daily return over the selected range."),
+                              tags$li(tags$b("Min/Max Price:"), " Min and max adjusted price over the selected range.")
                             )
                           ),
                           
