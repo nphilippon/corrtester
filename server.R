@@ -1003,7 +1003,7 @@ function(input, output, session) {
     
     pg <- ggplotly(p)
     
-    # Setting up categorized legend (THIS TOOK SO LONG TO GET WORKING I SHOULDNT HAVE EVEN HAD THE IDEA)
+    # Setting up categorized legend (THIS TOOK SO LONG TO GET WORKING)
     categories_assigned <- c()
     
     # Loops through chart traces to set legend groups and formatting

@@ -82,7 +82,7 @@ commodity_list <- list(
   "Commodity Futures (Forward Month)" = c(
     "WTI Crude Oil" = "CL=F",
     "Natural Gas (Henry Hub)" = "NG=F",
-    # "WCS Crude Oil" = "WCS", Will do later
+    # "WCS Crude Oil" = "WCS", WIP
     "Brent Crude Oil" = "BZ=F"
   )
 )
@@ -97,8 +97,6 @@ index_list <- list(
   )
 )
 
-
-# tickers <- unlist(assets, use.names = FALSE) (idk if i still need)
 
 # Helper func for cleaning commodity & .TO ticker names
 clean_ticker_names <- function(symbols) {
